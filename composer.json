@@ -1,0 +1,24 @@
+{
+    "name": "laraveltlr/tlr",
+    "description": "TLR System For Thinktanker",
+    
+    "autoload": {
+        "psr-4": {
+            "Laraveltlr\\Tlr\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Laraveltlr\\Tlr\\TLRServiceProvider"
+            ]
+        }
+    },
+    "authors": [
+        {
+            "name": "gaurav",
+            "email": "gaurav.thinktanker@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
