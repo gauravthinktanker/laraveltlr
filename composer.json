@@ -10,7 +10,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Laraveltlr\\Tlr\\TLRServiceProvider"
+                "Laraveltlr\\Tlr\\TlrServiceProvider"
             ]
         }
     },
