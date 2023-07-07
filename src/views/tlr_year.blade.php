@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @push('styles')
 
-<link rel="stylesheet" href="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="vendor/laraveltlr/tlr/storage/css/dataTables.bootstrap4.min.css">
 <style>
     .filter-box {
         z-index: 2;
@@ -66,8 +66,8 @@
 
 @push('scripts')
 
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables/jquery.dataTables.min.js"></script>
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/jquery.dataTables.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
   var path = '<?= URL::route('tlr_year') ?>';

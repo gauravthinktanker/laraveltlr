@@ -31,6 +31,14 @@
     border: 1px solid #000 !important;
     color: #fff !important;
   }
+  .swal2-cancel{
+        padding: 10px 10px 10px 10px;
+        margin: 10px 10px 10px 10px;
+    }
+    .swal2-confirm{
+        padding: 10px 10px 10px 10px;
+        margin: 10px 10px 10px 10px;
+    }
 </style>
 @endpush
 @section('content')
@@ -142,7 +150,7 @@
 @endsection
 
 @push('scripts')
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/bootstrap4-duallistbox/jquery.bootstrap-duallistbox.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/jquery.bootstrap-duallistbox.min.js"></script>
 
 <script type="text/javascript">
   //  function selectAll() {

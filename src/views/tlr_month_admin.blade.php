@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @push('styles')
 
-<link rel="stylesheet" href="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="vendor/laraveltlr/tlr/storage/css/dataTables.bootstrap4.min.css">
 <style>
     .filter-box {
         z-index: 2;
@@ -17,6 +17,14 @@
         ;
         border-color: #FFB400 !important;
         color: white;
+    }
+    .swal2-cancel{
+        padding: 10px 10px 10px 10px;
+        margin: 10px 10px 10px 10px;
+    }
+    .swal2-confirm{
+        padding: 10px 10px 10px 10px;
+        margin: 10px 10px 10px 10px;
     }
 </style>
 
@@ -88,8 +96,8 @@
 @endsection
 @push('scripts')
 
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables/jquery.dataTables.min.js"></script>
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/jquery.dataTables.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
     var token = "<?= csrf_token() ?>";
@@ -453,4 +461,17 @@
         });
     }
 </script>
+<script type="text/javascript">
+    var status_message = '{{session()->get("message")}}';
+  function massge() {
+  Swal.fire(
+           
+            '{{ session()->get('message') }}',
+            '',
+            '{{ session()->get('message_type') }}'
+        );
+  }
+if(status_message !='')
+  window.onload = massge;
+ </script>
 @endpush

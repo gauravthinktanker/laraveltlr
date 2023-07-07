@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @push('styles')
-<link rel="stylesheet" href="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="vendor/laraveltlr/tlr/storage/css/dataTables.bootstrap4.min.css">
 <style>
     .paginate_button.page-item.active {
         background-color: #ffb400 !important;
@@ -52,8 +52,8 @@
 @endsection
 @push('scripts')
 
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables/jquery.dataTables.min.js"></script>
-<script src="https://timeloggerapp.thinktanker.in/plugins/new/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/jquery.dataTables.min.js"></script>
+<script src="vendor/laraveltlr/tlr/storage/js/dataTables.bootstrap4.min.js"></script>
 <script>
     var path = '<?= URL::route('pointmaster.index', ['id' => ':id']) ?>';
     path = path.replace(':id', '<?= $id ?>');
