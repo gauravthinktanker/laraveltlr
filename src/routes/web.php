@@ -4,7 +4,75 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => 'web'], function () {
     Route::get(
-        'timezones/{timezone}',
+        'tlr-month',
         'laraveltlr\tlr\TlrController@index'
-    );
+    )->name('tlr_month');
+    Route::get(
+        'tlr-year',
+        'laraveltlr\tlr\TlrController@tlrYear'
+    )->name('tlr_year');
+    Route::get(
+        'tlr-point',
+        'laraveltlr\tlr\TlrController@tlrAdminMonth'
+    )->name('tlr_month_admin');
+    Route::post(
+        'tlr-month-delete'
+        ,'laraveltlr\tlr\TlrController@tlrAdminMonthDelete'
+    )->name('point.delete');
+    Route::get(
+        'tlr-create'
+        ,'laraveltlr\tlr\TlrController@tlrCreate'
+    )->name('point.create');
+    Route::post(
+        'tlr-store'
+        ,'laraveltlr\tlr\TlrController@tlrStore'
+    )->name('point.store');
+    Route::get(
+        'month',
+        'laraveltlr\tlr\TlrController@monthset'
+    )->name('monthset');
+    Route::get(
+        'month-user',
+        'laraveltlr\tlr\TlrController@monthsetuser'
+    )->name('monthsetuser');    
+    Route::get(
+        'tlr-point-master',
+        'laraveltlr\tlr\TlrController@masterindex'
+    )->name('pointmaster.index');
+    Route::get(
+        'tlr-point/{month}/{user_id}',
+        'laraveltlr\tlr\TlrController@userset'
+    )->name('point.user');
+
+    Route::get(
+        'tlr-headers',
+        'laraveltlr\tlr\TlrController@topicindex'
+    )->name('topic.index');
+
+    Route::get(
+        'tlr-headers/create',
+        'laraveltlr\tlr\TlrController@topiccreate'
+    )->name('topic.create');
+
+    Route::post(
+        'tlr-headers/store',
+        'laraveltlr\tlr\TlrController@topicstore'
+    )->name('topic.store');
+
+    Route::post(
+        'tlr-headers/delete',
+        'laraveltlr\tlr\TlrController@topicdelete'
+    )->name('topic.delete');
+
+    Route::get(
+        'tlr-headers/edit/{id}',
+        'laraveltlr\tlr\TlrController@topicedit'
+    )->name('topic.edit');
+
+
+    Route::put(
+        'tlr-headers/{id}',
+        'laraveltlr\tlr\TlrController@topicupdate'
+    )->name('topic.update');
+
 });
