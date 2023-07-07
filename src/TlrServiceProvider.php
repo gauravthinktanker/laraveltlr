@@ -21,10 +21,10 @@ class TlrServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/views', 'tlr');
-        $this->loadViewsFrom(__DIR__.'/storage', 'tlr');
-        $this->publishes([
-            __DIR__ . '/storage' => public_path('vendor/laraveltlr/tlr/storage'),
-        ], 'public');
+        // $this->loadViewsFrom(__DIR__.'/storage', 'tlr');
+        // $this->publishes([
+        //     __DIR__ . '/storage' => public_path('vendor/laraveltlr/tlr/storage'),
+        // ], 'public');
         
 
     }
