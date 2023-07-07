@@ -1,17 +1,13 @@
 @extends('layouts.app')
 @push('styles')
 
-<link rel="stylesheet" href="vendor/laraveltlr/tlr/storage/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="//cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css">
 <style>
     .filter-box {
         z-index: 2;
     }
 
-    .paginate_button.page-item.active {
-        background-color: #ffb400 !important;
-        border-color: #ffb400 !important;
-    }
-
+  
     .btnCreate-primary {
         background-color: #FFB400 !important;
         ;
@@ -96,8 +92,8 @@
 @endsection
 @push('scripts')
 
-<script src="vendor/laraveltlr/tlr/storage/js/jquery.dataTables.min.js"></script>
-<script src="vendor/laraveltlr/tlr/storage/js/dataTables.bootstrap4.min.js"></script>
+<script src="//cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
     var token = "<?= csrf_token() ?>";

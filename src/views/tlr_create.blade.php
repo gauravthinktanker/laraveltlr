@@ -1,5 +1,7 @@
 @extends('layouts.app')
 @push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap4-duallistbox/4.0.2/bootstrap-duallistbox.min.css">
+
 <style>
   .btnCreate-primary {
 
@@ -150,7 +152,7 @@
 @endsection
 
 @push('scripts')
-<script src="vendor/laraveltlr/tlr/storage/js/jquery.bootstrap-duallistbox.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap4-duallistbox/4.0.2/jquery.bootstrap-duallistbox.min.js"></script>
 
 <script type="text/javascript">
   //  function selectAll() {
