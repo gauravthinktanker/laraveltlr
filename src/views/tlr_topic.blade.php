@@ -26,6 +26,14 @@
         padding: 10px 10px 10px 10px;
         margin: 10px 10px 10px 10px;
     }
+    .dataTables_filter {
+        display: block !important;
+    }
+    div.dataTables_wrapper div.dataTables_filter input {
+        padding: 5px 5px 5px 5px !important;
+        margin: 10px 10px 10px 10px !important;
+
+    }
 </style>
 
 @endpush

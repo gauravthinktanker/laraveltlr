@@ -81,7 +81,7 @@
             <div class="form-group">
               <label for="exampleInputLeavePurpose" class="col-sm-2 form-label" id="organizer">Organizer</label>
               <div class="col-sm-9">
-                <?= Form::select('organizer', ['' => 'Select User'] + $users, old('organizer'), ['class' => 'form-control height-35 f-14', 'id' => 'organizer']) ?>
+                <?= Form::select('organizer', ['' => 'Select User'] + $users, old('organizer'), ['class' => 'form-control height-35 f-14', 'id' => 'organizerr']) ?>
                 <?= $errors->first('organizer', "<span class='text-danger'>:message</span>"); ?>
               </div>
             </div>
@@ -184,9 +184,9 @@
       }
     }
 
-    $(document).on('change', '#organizer', function() {
+    $(document).on('change', '#organizerr', function() {
       $('#participant').empty("");
-      var id = $("#organizer").val();
+      var id = $("#organizerr").val();
       $.ajax({
         type: "GET",
         url: "{{ route('point.create') }}",

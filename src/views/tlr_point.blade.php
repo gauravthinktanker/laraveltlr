@@ -9,16 +9,18 @@
 
     .dataTables_filter {
         display: block !important;
-        margin-top: 3%;
     }
     div.dataTables_wrapper div.dataTables_filter input {
-        height: 50% !important;
+        padding: 5px 5px 5px 5px !important;
+        margin: 10px 10px 10px 10px !important;
 
     }
 </style>
 @section('filter-section')
-<x-filters.filter-box>
-    <div class="select-box d-flex pr-2 border-right-grey border-right-grey-sm-0" style="height: 45px; !important">
+<div class="filter-box">
+<form action="" id="filter-form">
+<div class="d-lg-flex d-md-flex d-block flex-wrap filter-box bg-white client-list-filter">
+    <div class="select-box py-2 d-flex pr-2 border-right-grey border-right-grey-sm-0">
         <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">Month</p>
         <div class="select-status d-flex">
             <select id="month" name="month" class="position-relative text-dark form-control border-0 p-2 text-left f-14 f-w-500 border-additional-grey"></select>
@@ -26,13 +28,15 @@
         </div>
     </div>
 
-    <div class="select-box d-flex pr-2 border-right-grey border-right-grey-sm-0">
+    <div class="select-box d-flex py-2 px-lg-2 px-md-2 px-0 border-right-grey border-right-grey-sm-0">
         <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">Year</p>
         <div class="select-status d-flex">
             <select id="year" name="year" class="position-relative text-dark form-control border-0 p-2 text-left f-14 f-w-500 border-additional-grey"></select>
         </div>
     </div>
-</x-filters.filter-box>
+</div>
+</form>
+</div>
 @endsection
 @section('content')
 <div class="content-wrapper">

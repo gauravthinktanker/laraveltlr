@@ -28,13 +28,15 @@ Route::group(['middleware' => 'web'], function () {
         ,'laraveltlr\tlr\TlrController@tlrStore'
     )->name('point.store');
     Route::get(
-        'month',
+        'tlr-points/{month}',
         'laraveltlr\tlr\TlrController@monthset'
     )->name('monthset');
     Route::get(
-        'month-user',
+        'tlr-point/{month_user}',
         'laraveltlr\tlr\TlrController@monthsetuser'
-    )->name('monthsetuser');    
+    )->name('monthsetuser');
+   
+
     Route::get(
         'tlr-point-master',
         'laraveltlr\tlr\TlrController@masterindex'

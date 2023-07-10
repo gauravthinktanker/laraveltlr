@@ -13,31 +13,33 @@
 @endpush
 
 @section('filter-section')
-<x-filters.filter-box>
+<div class="filter-box">
+<form action="" id="filter-form">
+<div class="d-lg-flex d-md-flex d-block flex-wrap filter-box bg-white client-list-filter">
 @if($logged_user_id == "")
-    <div class="select-box d-flex pr-2 border-right-grey border-right-grey-sm-0" style="height: 45px; !important">
+    <div class="select-box py-2 d-flex pr-2 border-right-grey border-right-grey-sm-0">
         <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">User</p>
         <div class="select-status d-flex">
-        <?= Form::select('user_id', ['' => 'select'] + $all_users, old('user_id'), ['class' => 'position-relative text-dark form-control border-0 p-2 text-left f-14 f-w-500 border-additional-grey', 'id' => 'users']) ?>
+        <?= Form::select('user_id', ['' => 'Select'] + $all_users, old('user_id'), ['class' => 'position-relative text-dark form-control border-0 p-2 text-left f-14 f-w-500 border-additional-grey', 'id' => 'users']) ?>
+        </div>
+    </div>
+    <div class="select-box d-flex py-2 px-lg-2 px-md-2 px-0 border-right-grey border-right-grey-sm-0">
+        <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">Date</p>
+        <div class="select-status d-flex">
+        <input type="text" name="from_date" id="from_date" class="form-control  date-picker height-45 f-14" placeholder="From Date" />
+        <input type="text" name="to_date" id="to_date" class="form-control date-picker height-45 f-14" placeholder="To Date" />
         </div>
     </div>
     @endif
-
-    <div class="select-box d-flex pr-2 border-right-grey border-right-grey-sm-0">
+    <div class="select-box d-flex py-2 px-lg-2 px-md-2 px-0 border-right-grey border-right-grey-sm-0">
         <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">Year</p>
         <div class="select-status d-flex">
         <select id="year" name="year" class="position-relative text-dark form-control border-0 p-2 text-left f-14 f-w-500 border-additional-grey"></select>
         </div>
     </div>
-
-    <div class="select-box d-flex pr-2 border-right-grey border-right-grey-sm-0">
-        <p class="mb-0 pr-2 f-14 text-dark-grey d-flex align-items-center">Date</p>
-        <div class="select-status d-flex">
-        <input type="text" name="from_date" id="from_date" class="form-control  date-picker height-45 f-14 select_year" placeholder="From Date" />
-        <input type="text" name="to_date" id="to_date" class="form-control date-picker height-45 f-14 select_year" placeholder="To Date" />
-        </div>
-    </div>
-</x-filters.filter-box>
+</div>
+</form>
+</div>
 @endsection
 @section('content')
 
@@ -83,6 +85,7 @@
     //             autoclose:true
     //            });
     load_data();
+    @if($logged_user_id == "")
     const datepickerConfig = {
       formatter: (input, date, instance) => {
         input.value = moment(date).format('YYYY-MM-DD')
@@ -116,7 +119,7 @@
         });
       }
     });
-
+    @endif
     function load_data(from_date = '', to_date = '') {
 
       var url_id = '<?= $id ?>';
@@ -189,9 +192,9 @@
               var pathadmin = "<?= URL::route('monthset', ['month' => ':id']) ?>";
               pathadmin = pathadmin.replace(':id', month);
 
-              var pathuser = "<?= URL::route('monthsetuser', ['month' => ':id']) ?>";
+              var pathuser = "<?= URL::route('monthsetuser', ['month_user' => ':id']) ?>";
               pathuser = pathuser.replace(':id', month);
-
+              
               @if($logged_user_id == "")
               if (o['point'] >= 70) {
                 var extra_html = '<a href="' + pathadmin + '"+><div class="rounded-circle" style="background-color: green;height:24px;width:24px;"></div></a>'
@@ -272,21 +275,20 @@
       });
     });
 
-    $('#from_date').change(function() {
-alert("Sdsd");
-      $('.dataTable').each(function() {
-        dt = $(this).dataTable();
-        dt.fnDraw();
-      });
-    });
+    // $('#from_date').change(function() {
+    //   $('.dataTable').each(function() {
+    //     dt = $(this).dataTable();
+    //     dt.fnDraw();
+    //   });
+    // });
 
-    $('#to_date').change(function() {
+    // $('#to_date').change(function() {
 
-      $('.dataTable').each(function() {
-        dt = $(this).dataTable();
-        dt.fnDraw();
-      });
-    });
+    //   $('.dataTable').each(function() {
+    //     dt = $(this).dataTable();
+    //     dt.fnDraw();
+    //   });
+    // });
     $(document).ready(function() {
 
       const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -313,6 +315,7 @@ alert("Sdsd");
       var d = new Date();
       var month = d.getMonth();
       var year = d.getFullYear();
+      console.log(currentYear);
 
       AdjustMonth();
       selectMonth.val(year);

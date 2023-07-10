@@ -127,6 +127,7 @@ class TlrController extends Controller
         return view('tlr::tlr_month', ['id'=>$id,'logged_user_id'=>$logged_user_id],$this->data);
     }
     public function tlrAdminMonth(Request $request){
+
         $user = session()->get('user');
          $sidebar_user_perms = session()->get('sidebar_user_perms');
          $pusher_settings = session()->get('pusher_settings');
@@ -153,13 +154,13 @@ class TlrController extends Controller
         
         if (Session::get('month') != 15) {
             $month = Session::get('month') + 1;
-            $id = Session::get('user_id');
+            $user_id = Session::get('user_id');
         }else if(isset($request->month)){
             $month = intval($request['month'])+1;
-            $id = $request->user;
+            $user_id = $request->user;
         }else
         {
-            $id = $request->user;
+            $user_id = $request->user;
             $month = date('m');
         }
 
@@ -181,13 +182,13 @@ class TlrController extends Controller
                             .")";
             }
              $columns = array('point.id','point.user_id','point.from_hour','point.to_hour', 'point.topic_id','point.subject','point.participant','point.point','point.date','users.name');
-             if($id != null)
+             if($user_id != null)
              {
 
                $point_count = DB::table("point")
                             ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,users.name")
                             ->join('users','point.user_id','=','users.id')
-                            ->where('user_id',$id)
+                            ->where('user_id',$user_id)
                             ->whereRaw('MONTH(date) = ?',[$month])
                             ->whereRaw('YEAR(date) = ?',[$year])
                             ->whereRaw($where_str,$where_param)
@@ -196,7 +197,7 @@ class TlrController extends Controller
                 $Point = DB::table("point")
                         ->selectRaw("*,DATE_FORMAT(point.date, '%d/%m/%Y') as date,users.name,point.id as id")
                         ->join('users','point.user_id','=','users.id')
-                        ->where('user_id',$id)
+                        ->where('user_id',$user_id)
                         ->whereRaw('MONTH(date) = ?',[$month])
                         ->whereRaw('YEAR(date) = ?',[$year])
                         ->whereRaw($where_str,$where_param);
@@ -204,6 +205,7 @@ class TlrController extends Controller
              }
              else
             {
+               
                 $point_count = DB::table("point")
                             ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,users.name")
                             ->join('users','point.user_id','=','users.id')
@@ -306,15 +308,15 @@ class TlrController extends Controller
 
 
         if ($user->roles[0]['name'] == 'admin') {
-            $id = $request->user;
+            $user_id = $request->user;
         } else {
-            $id = Auth::id();
+            $user_id = Auth::id();
         }
 
-        Session::put("user_name", $id);
-
-
-        $logged_user_id = $id;
+        Session::put("user_name", $user_id);
+        Session::put("user_id",$user_id);
+        
+        $logged_user_id = $user_id;
 
         if ($request->ajax()) {
             $where_str = "1 =?";
@@ -327,7 +329,7 @@ class TlrController extends Controller
                 $Point = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,SUM(point) as point,DATE_FORMAT(date, '%m') as month")
                     ->whereBetween('date', array($request->from_date, $request->to_date))
-                    ->where('user_id', $id)
+                    ->where('user_id', $user_id)
                     ->orderBy('month', 'ASC')
                     ->groupBy('date')
                     ->whereRaw($where_str, $where_param);
@@ -336,7 +338,7 @@ class TlrController extends Controller
                 $Point = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,SUM(point) as point,DATE_FORMAT(date, '%m') as month")
                     ->whereRaw('YEAR(date) = ?', [$year])
-                    ->where('user_id', $id)
+                    ->where('user_id', $user_id)
                     ->orderBy('month', 'ASC')
                     ->groupBy('date')
                     ->whereRaw($where_str, $where_param);
@@ -403,7 +405,7 @@ class TlrController extends Controller
         //dd($all_users);
         }
 
-        return view('tlr::tlr_year', ['all_users' => $all_users, 'id' => $id, 'logged_user_id' => $logged_user_id],$this->data);
+        return view('tlr::tlr_year', ['all_users' => $all_users, 'id' => $user_id, 'logged_user_id' => $logged_user_id],$this->data);
     }
 
     public function tlrCreate(Request $request)
@@ -572,15 +574,16 @@ class TlrController extends Controller
     public function monthset($month)
     {  
         Session::put("month",$month);
-        return redirect()->route('point.index');
+        return redirect()->route('tlr_month_admin');
     }
 
-    public function monthsetuser($month)
+    public function monthsetuser($month_user)
     {  
-        Session::put("month",$month);
-        return redirect()->route('user.viewindex');
+        
+        Session::put("month",$month_user);
+        return redirect()->route('tlr_month');
     }
-
+    
     public function masterindex(Request $request)
     {
         $user = session()->get('user');
@@ -684,7 +687,7 @@ class TlrController extends Controller
     {  
         Session::put("month",$month);
         Session::put("user_id",$user_id);
-        return redirect()->route('tlr_month');
+        return redirect()->route('tlr_month_admin');
     }
 
     public function topicindex(Request $request)
