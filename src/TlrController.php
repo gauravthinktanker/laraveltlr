@@ -192,6 +192,7 @@ class TlrController extends Controller
                             ->whereRaw('MONTH(date) = ?',[$month])
                             ->whereRaw('YEAR(date) = ?',[$year])
                             ->whereRaw($where_str,$where_param)
+                            ->where('users.status','active')
                             ->count();
 
                 $Point = DB::table("point")
@@ -200,6 +201,7 @@ class TlrController extends Controller
                         ->where('user_id',$user_id)
                         ->whereRaw('MONTH(date) = ?',[$month])
                         ->whereRaw('YEAR(date) = ?',[$year])
+                        ->where('users.status','active')
                         ->whereRaw($where_str,$where_param);
 
              }
@@ -212,6 +214,7 @@ class TlrController extends Controller
                             ->whereRaw('MONTH(date) = ?',[$month])
                             ->whereRaw('YEAR(date) = ?',[$year])
                             ->whereRaw($where_str,$where_param)
+                            ->where('users.status','active')
                             ->count();
 
                 $Point = DB::table("point")
@@ -219,6 +222,7 @@ class TlrController extends Controller
                         ->join('users','point.user_id','=','users.id')
                         ->whereRaw('MONTH(date) = ?',[$month])
                         ->whereRaw('YEAR(date) = ?',[$year])
+                        ->where('users.status','active')
                         ->whereRaw($where_str,$where_param);
             }
 
@@ -243,7 +247,7 @@ class TlrController extends Controller
 
                     foreach($array_data as $key =>$value)
                     {
-                        $team_member = DB::table("users")->select('name','id')->where('id',$value['user_id'])->get()->toArray();
+                        $team_member = DB::table("users")->select('name','id')->where('id',$value['user_id'])->where('status','active')->get()->toArray();
 
                         $topic =  DB::table("topic")->select('topic','id')->where('id',$value['topic_id'])->get()->toArray();
 
@@ -269,7 +273,7 @@ class TlrController extends Controller
             $logged_user_id = '';
             
 
-            $all_users = DB::table('users')->orderBy('name')->pluck('name', 'id')->toArray();
+            $all_users = DB::table('users')->where('status','active')->orderBy('name')->pluck('name', 'id')->toArray();
         //dd($all_users);
         }
         return view('tlr::tlr_month_admin',['all_users'=>$all_users],$this->data);
@@ -401,7 +405,7 @@ class TlrController extends Controller
             $logged_user_id = '';
             
 
-            $all_users = DB::table('users')->orderBy('name')->pluck('name', 'id')->toArray();
+            $all_users = DB::table('users')->where('status','active')->orderBy('name')->pluck('name', 'id')->toArray();
         //dd($all_users);
         }
 
@@ -436,7 +440,7 @@ class TlrController extends Controller
 
         if ($request->ajax()) {
             $id = $request->id;
-            $participant =DB::table('users')->select('name','id')->get()->pluck('name','id')->toArray();
+            $participant =DB::table('users')->select('name','id')->where('status','active')->get()->pluck('name','id')->toArray();
             unset($participant[$id]);
             return response()->json(["participant" => $participant]);
         }
@@ -445,7 +449,7 @@ class TlrController extends Controller
             unset($topic[10]);
             unset($topic[11]);
 
-        $users =DB::table('users')->select('name','id')->get()->pluck('name','id')->toArray();
+        $users =DB::table('users')->select('name','id')->where('status','active')->get()->pluck('name','id')->toArray();
 
 
         $skills = ['Unsatisfactory','Less than satisfactory','Fully satisfactory','Excellent'];
@@ -454,6 +458,7 @@ class TlrController extends Controller
 
     public function tlrStore(Request $request)
     {
+        
         $user = session()->get('user');
          $sidebar_user_perms = session()->get('sidebar_user_perms');
          $pusher_settings = session()->get('pusher_settings');
@@ -509,8 +514,8 @@ class TlrController extends Controller
         
         if($request->from_hour != "10:00 AM" && $request->to_hour != "07:00 PM" )
         {
-            $from_hour = $request->from_hour;
-            $to_hour = $request->to_hour;
+            $from_hour = date('h:i A', strtotime($request->from_hour));
+            $to_hour = date('h:i A', strtotime($request->to_hour));
         }else{
             $from_hour = "";
             $to_hour = "";
@@ -537,8 +542,8 @@ class TlrController extends Controller
                 $subject = $request->subject;
                 if($request->from_hour != "10:00 AM" && $request->to_hour != "07:00 PM" )
                 {
-                    $from_hour = $request->from_hour;
-                    $to_hour = $request->to_hour;
+                    $from_hour = date('h:i A', strtotime($request->from_hour));
+                    $to_hour = date('h:i A', strtotime($request->to_hour));
                 }else{
                     $from_hour = "";
                     $to_hour = "";
@@ -645,6 +650,7 @@ class TlrController extends Controller
             ->join('users','point.user_id','=','users.id')
             ->whereRaw('MONTH(date) = ?',[$month])
             ->whereRaw('YEAR(date) = ?',[$year])
+            ->where('users.status','active')
             ->groupby('user_id')
             ->whereRaw($where_str,$where_param);
 

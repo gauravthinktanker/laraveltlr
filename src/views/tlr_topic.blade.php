@@ -41,7 +41,7 @@
 <div class="content-wrapper">
     <div class="d-block d-lg-flex d-md-flex justify-content-between action-bar">
         <div id="table-actions" class="flex-grow-1 align-items-center">
-            <a href="<?= URL::route('topic.create') ?>" class="btnCreate-primary rounded f-14 p-2" style="float:right">Add Header</a>
+            <a href="<?= URL::route('topic.create') ?>" class="btn-primary rounded f-14 p-2 mr-3" style="float:right">Add Header</a>
         </div>
     </div>
     <div class="d-flex flex-column w-tables rounded mt-3 bg-white">

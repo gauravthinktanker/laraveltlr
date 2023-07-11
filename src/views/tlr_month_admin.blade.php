@@ -67,7 +67,7 @@
 <div class="content-wrapper">
     <div class="d-block d-lg-flex d-md-flex justify-content-between action-bar">
         <div id="table-actions" class="flex-grow-1 align-items-center">
-            <a href="<?= URL::route('point.create') ?>" class="btnCreate-primary rounded f-14 p-2" style="float: right !important;">Add Point</a>
+            <a href="<?= URL::route('point.create') ?>" class="btn-primary rounded f-14 p-2 mr-3" style="float: right !important;">Add Point</a>
 
         </div>
     </div>

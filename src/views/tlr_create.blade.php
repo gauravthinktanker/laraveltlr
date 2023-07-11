@@ -3,36 +3,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap4-duallistbox/4.0.2/bootstrap-duallistbox.min.css">
 
 <style>
-  .btnCreate-primary {
-
-    background-color: #FFB400 !important;
-    border: 1px solid #FFB400 !important;
-    color: #fff !important;
-    padding: 9px 11px;
-    position: relative;
-    text-transform: capitalize;
-  }
-
-  .btnCancel-secondary {
-    background-color: #fff !important;
-    border: 1px solid #616e80;
-    color: #616e80 !important;
-    padding: 9px 11px;
-    position: relative;
-    text-transform: capitalize;
-  }
-
-  .btnCreate-primary:hover {
-    background-color: #000 !important;
-    border: 1px solid #000 !important;
-    color: #fff !important;
-  }
-
-  .btnCancel-secondary:hover {
-    background-color: #000 !important;
-    border: 1px solid #000 !important;
-    color: #fff !important;
-  }
   .swal2-cancel{
         padding: 10px 10px 10px 10px;
         margin: 10px 10px 10px 10px;
@@ -127,22 +97,22 @@
             <div class="form-group" id="from_hour_div">
               <label for="exampleInputLeavePurpose" class="col-sm-2 form-label">From Hours</label>
               <div class="col-sm-9">
-                <?= Form::text('from_hour', '10:00 AM', ['class' => 'form-control height-35 f-14 timepicker1', 'placeholder' => 'From Hours']); ?>
+                <?= Form::time('from_hour', '10:00', ['class' => 'form-control height-35 f-14 timepicker1', 'placeholder' => 'From Hours']); ?>
                 <?= $errors->first('from_hour', "<span class='text-danger'>:message</span>"); ?>
               </div>
             </div>
             <div class="form-group" id="to_hour_div">
               <label for="exampleInputLeavePurpose" class="col-sm-2 form-label">To Hours</label>
               <div class="col-sm-9">
-                <?= Form::text('to_hour', '07:00 PM', ['class' => 'form-control height-35 f-14 timepicker2', 'placeholder' => 'To Hours']); ?>
+                <?= Form::time('to_hour', '19:00', ['class' => 'form-control height-35 f-14 timepicker2', 'placeholder' => 'To Hours']); ?>
                 <?= $errors->first('to_hour', "<span class='text-danger'>:message</span>"); ?>
               </div>
             </div>
           </div>
         </div>
         <div class="w-100 border-top-grey d-block d-lg-flex d-md-flex justify-content-start px-4 py-3">
-          <button type="submit" class="btnCreate-primary f-14 p-2 mr-3 submit" id="submit" name="save_button" value="save_new">Save</button>
-          <a href="<?= URL::route('tlr_month_admin') ?>" class="btnCancel-secondary"> Cancel</a>
+          <button type="submit" class="btn-primary rounded f-14 p-2 mr-3" id="submit" name="save_button" value="save_new">Save</button>
+          <a href="<?= URL::route('tlr_month_admin') ?>" class="btn-cancel rounded f-14 p-2 border-0"> Cancel</a>
         </div>
         {!! Form::close() !!}
       </div>
