@@ -892,4 +892,206 @@ class TlrController extends Controller
                       ->with('message','success');
     }
 
+    public function services(Request $request){
+
+        $user = session()->get('user');
+         $sidebar_user_perms = session()->get('sidebar_user_perms');
+         $pusher_settings = session()->get('pusher_settings');
+         $push_setting = session()->get('push_setting');
+         $id = $user->id;
+         $appTheme = session()->get('admin_theme');
+         $sidebarUserPermissions = $sidebar_user_perms;
+         $this->currentRouteName = "services";
+         $worksuitePlugins = [];
+         $customLink = [];
+         $this->checkListCompleted = 5;
+         $this->checkListTotal = 6;
+         $this->pushSetting = $push_setting;
+         $this->user = $user;
+         $this->appTheme = $appTheme;
+         $this->worksuitePlugins = $worksuitePlugins;
+         $this->pusherSettings = $pusher_settings;
+         $this->activeTimerCount = 0;
+         $this->customLink = $customLink;
+         $this->unreadMessagesCount = 0;
+         $this->sidebarUserPermissions = $sidebarUserPermissions;
+         $this->unreadNotificationCount = 0;
+         $this->pageTitle = "Services";
+        
+        if($request->ajax()){
+
+            $where_str = '1 = ?';
+            $where_params = [1];
+
+            if ($request->has('sSearch')) {
+                $search = $request->get('sSearch');
+                $where_str .= " and (services.phone_num like \"%{$search}%\""
+                            ." or services.person_name like \"%{$search}%\""
+                            ." or category.category_name like \"%{$search}%\""
+                             .")";           
+            }
+            $columns = ['services.id','services.person_name as person_name','services.phone_num as phone_num','category.category_name as category'];
+
+            $services_count = DB::table('services')->select($columns)
+                        ->leftjoin('category','category.id','=','services.category')
+                        ->whereRaw($where_str,$where_params)
+                        ->count();
+            $services = DB::table('services')->select($columns)
+                        ->leftjoin('category','category.id','=','services.category')
+                       ->whereRaw($where_str,$where_params);
+
+            if ($request->has('iDisplayStart') && $request->get('iDisplayLength') != '-1') {
+                $services = $services->take($request->get('iDisplayLength'))->skip($request->get('iDisplayStart'));
+            }
+
+            if ($request->has('iSortCol_0')) {
+                for ($i = 0; $i < $request->get('iSortingCols'); $i++) {
+                    $column = $columns[$request->get('iSortCol_' . $i)];
+                    if (false !== ($index = strpos($column, ' as '))) {
+                        $column = substr($column, 0, $index);
+                    }
+                    $services = $services->orderBy($column, $request->get('sSortDir_' . $i));
+                }
+            }
+            
+            $services = $services->get();
+            $response['iTotalDisplayRecords'] = $services_count;
+            $response['iTotalRecords'] = $services_count;
+
+            $response['sEcho'] = intval($request->get('sEcho'));
+
+            $response['aaData'] = $services;
+
+            return $response;
+        }
+
+        return view('tlr::services',$this->data);
+    }
+    public function servicesCreate()
+    {
+        $user = session()->get('user');
+         $sidebar_user_perms = session()->get('sidebar_user_perms');
+         $pusher_settings = session()->get('pusher_settings');
+         $push_setting = session()->get('push_setting');
+         $id = $user->id;
+         $appTheme = session()->get('admin_theme');
+         $sidebarUserPermissions = $sidebar_user_perms;
+         $this->currentRouteName = "services_create";
+         $worksuitePlugins = [];
+         $customLink = [];
+         $this->checkListCompleted = 5;
+         $this->checkListTotal = 6;
+         $this->pushSetting = $push_setting;
+         $this->user = $user;
+         $this->appTheme = $appTheme;
+         $this->worksuitePlugins = $worksuitePlugins;
+         $this->pusherSettings = $pusher_settings;
+         $this->activeTimerCount = 0;
+         $this->customLink = $customLink;
+         $this->unreadMessagesCount = 0;
+         $this->sidebarUserPermissions = $sidebarUserPermissions;
+         $this->unreadNotificationCount = 0;
+         $this->pageTitle = "Services-Create";
+
+         $category = ['NEW'=>"Add New Category"]+DB::table('category')->orderBy('category_name','asc')->pluck('category_name', 'id')->toArray();
+            return view('tlr::services_create',['category'=>$category],$this->data);
+    }
+
+    public function servicesStore(Request $request){
+        $this->validate($request,[
+
+            'person_name' => 'required',
+            'category' => 'required',  
+        ],[
+            'person_name.required' => 'Person Name is Required',
+            'category.required' => 'Category is Required',
+        ]);
+
+        $services_master = $request->all();
+
+        $phone_num = implode(',',$services_master['phone_num']) ;
+        DB::table('services')->updateOrInsert([
+            "person_name"=>  $request->person_name,
+            "category"=>  $request->category,
+            "phone_num"=>  $phone_num,
+         ]);
+
+        if($services_master['save_button'] == "save"){
+            return redirect()->back()
+                         ->with('message','Record Added successfully')
+                         ->with('message_type','success');    
+        }
+        return redirect()->route('services.index')
+                         ->with('message','Record Added successfully')
+                         ->with('message_type','success');
+    }
+    public function servicesEdit($rowid)
+    {
+        $user = session()->get('user');
+         $sidebar_user_perms = session()->get('sidebar_user_perms');
+         $pusher_settings = session()->get('pusher_settings');
+         $push_setting = session()->get('push_setting');
+         $id = $user->id;
+         $appTheme = session()->get('admin_theme');
+         $sidebarUserPermissions = $sidebar_user_perms;
+         $this->currentRouteName = "services-edit";
+         $worksuitePlugins = [];
+         $customLink = [];
+         $this->checkListCompleted = 5;
+         $this->checkListTotal = 6;
+         $this->pushSetting = $push_setting;
+         $this->user = $user;
+         $this->appTheme = $appTheme;
+         $this->worksuitePlugins = $worksuitePlugins;
+         $this->pusherSettings = $pusher_settings;
+         $this->activeTimerCount = 0;
+         $this->customLink = $customLink;
+         $this->unreadMessagesCount = 0;
+         $this->sidebarUserPermissions = $sidebarUserPermissions;
+         $this->unreadNotificationCount = 0;
+         $this->pageTitle = "Services-Edit";
+
+        $category = ['NEW'=>"Add New Category"]+DB::table('category')->orderBy('category_name','asc')->pluck('category_name', 'id')->toArray();
+        $service_master = DB::table('services')->where('id',$rowid)->first();
+        //$service_master = json_encode($service_master);
+        //$service_master = json_decode($service_master,true);
+
+         //dd($service_master);
+        return view('tlr::services_edit',['service_master'=>$service_master,'category'=>$category],$this->data);
+    }
+    public function servicesUpadate(Request $request,$rowid)
+    {
+        $this->validate($request,[
+
+            'person_name' => 'required',
+            'category' => 'required',  
+        ],[
+            'person_name.required' => 'Person Name is Required',
+            'category.required' => 'Category is Required',
+        ]);
+    	$services_master = $request->all();
+        $phone_num = implode(',',$services_master['phone_num']) ;
+        DB::table('services')->updateOrInsert(['id'=>$rowid],[
+            "person_name"=>  $request->person_name,
+            "category"=>  $request->category,
+            "phone_num"=>  $phone_num,
+         ]);
+        if($services_master['save_button'] == "save"){
+            return redirect()->back()
+                         ->with('message','Record Updated successfully')
+                         ->with('message_type','success');    
+        }
+        return redirect()->route('services.index')
+                         ->with('message','Record Updated successfully')
+                         ->with('message_type','success');
+    }
+    public function servicesDelete(Request $request)
+    {
+        $id = $request->get('id');
+        
+        DB::table('services')->where('id', $id)->delete();
+
+        return back()->with('message', 'Record Deleted Successfully.')
+            ->with('message_type', 'success');
+    }
 }

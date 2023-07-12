@@ -77,4 +77,39 @@ Route::group(['middleware' => 'web'], function () {
         'laraveltlr\tlr\TlrController@topicupdate'
     )->name('topic.update');
 
+    Route::get(
+        'services',
+        'laraveltlr\tlr\TlrController@services'
+    )->name('services.index');
+
+    Route::get(
+        'services-create',
+        'laraveltlr\tlr\TlrController@servicesCreate'
+    )->name('services.create');
+
+    Route::post(
+        'services-store',
+        'laraveltlr\tlr\TlrController@servicesStore'
+    )->name('services.store');
+
+    Route::get(
+        'services-edit/{id}',
+        'laraveltlr\tlr\TlrController@servicesEdit'
+    )->name('services.edit');
+
+    Route::put(
+        'services-update/{id}',
+        'laraveltlr\tlr\TlrController@servicesUpadate'
+    )->name('services.update');
+
+    Route::post(
+        'services-delete',
+        'laraveltlr\tlr\TlrController@servicesDelete'
+    )->name('services.delete');
+
+    Route::post(
+        'services-category',
+        'laraveltlr\tlr\TlrController@categoryStore'
+    )->name('category.store');
+
 });
