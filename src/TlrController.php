@@ -4,7 +4,7 @@ namespace Laraveltlr\Tlr;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Auth, DB, Session;
+use Auth, DB, Session, DateTimeZone, DateTime;
 
 class TlrController extends Controller
 {
@@ -1088,5 +1088,61 @@ class TlrController extends Controller
         ]);
 
         return $cat_id;
+    }
+
+    public function timelog($user_id)
+    {
+        $utcTimezone = new DateTimeZone('UTC');
+
+        $date = date('Y-m-d H:i:s');
+
+        $time = new DateTime($date, $utcTimezone);
+
+        $time->format('Y-m-d H:i:s');
+        $latest = $time->format('Y-m-d H:i:s');
+
+        $laTimezone = new DateTimeZone('Asia/kolkata');
+
+        $time->setTimeZone($laTimezone);
+
+        $current = $time->format('Y-m-d H:i:s');
+
+        $late = "no";
+        $half_day = "no";
+        if (date('H:i:s', strtotime($current)) > '10:15:00') {
+            $late = "yes";
+        }
+        if (date('H:i:s', strtotime($current)) > '14:00:00') {
+            $half_day = "yes";
+        }
+
+        $checkExiting = DB::table('attendances')->orderBy('clock_in_time','desc')->where('user_id',$user_id)->whereRaw('date(clock_in_time) = ?',date('Y-m-d'))->first();
+        
+        if($checkExiting)
+        {
+            
+            DB::table('attendances')->where('id', $checkExiting->id)  // find your user by their email
+            ->limit(1)->update([
+            "clock_out_time" =>  $latest,
+            'user_id'=>$user_id,
+            'updated_at'=>$current,
+            "clock_out_ip"=>$_SERVER['REMOTE_ADDR']
+            ]);
+        }
+        else{
+            DB::table('attendances')->insert( [
+                'user_id'=>$user_id,
+                'company_id'=>1,
+                'location_id'=>1,
+                "clock_in_time" =>  $latest,
+                "late"=>$late,
+                "half_day"=>$half_day,
+                "work_from_type"=>"office",
+                'created_at'=>$current,
+                "clock_in_ip"=>$_SERVER['REMOTE_ADDR']
+                ]);
+        }
+        echo json_encode(['status'=>"success"]);
+
     }
 }

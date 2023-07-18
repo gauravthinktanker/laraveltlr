@@ -111,5 +111,8 @@ Route::group(['middleware' => 'web'], function () {
         'services-category',
         'laraveltlr\tlr\TlrController@categoryStore'
     )->name('category.store');
-
+    Route::get(
+        'timelog/{user_id}',
+        'laraveltlr\tlr\TlrController@timelog'
+    )->name('timelog');
 });
