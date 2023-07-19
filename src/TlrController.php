@@ -1090,8 +1090,10 @@ class TlrController extends Controller
         return $cat_id;
     }
 
-    public function timelog($user_id)
+    public function timelog($employee_id)
     {
+        $data_user = DB::table('employee_details')->select('user_id')->where('employee_id',$employee_id)->first();
+        $user_id =  $data_user->user_id;
         $utcTimezone = new DateTimeZone('UTC');
 
         $date = date('Y-m-d H:i:s');
