@@ -1279,7 +1279,7 @@ use UniversalSearchTrait;
     $client->setScopes([\Google_Service_Sheets::SPREADSHEETS]);
     $client->setAccessType('offline');
     // credentials.json is the key file we downloaded while setting up our Google Sheets API
-    $path = __DIR__.'\credentials.json';
+    $path = __DIR__.'/credentials.json';
     $client->setAuthConfig($path);
 
     // configure the Sheets Service
