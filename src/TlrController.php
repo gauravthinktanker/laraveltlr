@@ -5,10 +5,15 @@ namespace Laraveltlr\Tlr;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Auth, DB, Session, DateTimeZone, DateTime;
+use App\Models\Role;
+use App\Models\EmployeeDetails;
+use App\Models\User;
+use App\Helper\Reply;
+use App\Traits\UniversalSearchTrait;
 
 class TlrController extends Controller
 {
-
+use UniversalSearchTrait;
 
     public function index(Request $request)
     {
@@ -1144,7 +1149,195 @@ class TlrController extends Controller
                 "clock_in_ip"=>$_SERVER['REMOTE_ADDR']
                 ]);
         }
+
         echo json_encode(['status'=>"success"]);
 
     }
+    public function storeEMP(Request $request)
+    {
+        
+        DB::beginTransaction();
+        try {
+            $user = new User();
+            $user->company_id = 1;
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = bcrypt($request->password);
+            $user->mobile = $request->mobile;
+            $user->country_id = '1';
+            $user->country_phonecode = '+91';
+            $user->gender = $request->gender;
+            $user->locale = 'en';
+
+            if ($request->has('login')) {
+                $user->login = $request->login;
+            }
+
+            if ($request->has('email_notifications')) {
+                $user->email_notifications = $request->email_notifications ? 1 : 0;
+            }
+
+            if ($request->hasFile('image')) {
+                Files::deleteFile($user->image, 'avatar');
+                $user->image = Files::upload($request->image, 'avatar', 300);
+            }
+
+            if ($request->has('telegram_user_id')) {
+                $user->telegram_user_id = $request->telegram_user_id;
+            }
+
+            $user->save();
+
+            $tags = json_decode($request->tags);
+
+            if (!empty($tags)) {
+                foreach ($tags as $tag) {
+                    // check or store skills
+                    $skillData = Skill::firstOrCreate(['name' => strtolower($tag->value)]);
+
+                    // Store user skills
+                    $skill = new EmployeeSkill();
+                    $skill->user_id = $user->id;
+                    $skill->skill_id = $skillData->id;
+                    $skill->save();
+                }
+            }
+
+            if ($user->id) {
+                $employee = new EmployeeDetails();
+                $employee->user_id = $user->id;
+                $this->employeeData($request, $employee);
+                $employee->save();
+
+                // To add custom fields data
+                if ($request->custom_fields_data) {
+                    $employee->updateCustomFieldData($request->custom_fields_data);
+                }
+            }
+
+            $employeeRole = Role::where('name', 'employee')->first();
+            $user->attachRole($employeeRole);
+
+            if ($employeeRole->id != $request->role) {
+                $otherRole = Role::where('id', $request->role)->first();
+                $user->attachRole($otherRole);
+            }
+
+            $user->assignUserRolePermission($request->role);
+            $this->logSearchEntry($user->id, $user->name, 'employees.show', 'employee');
+
+            // Commit Transaction
+            DB::commit();
+
+
+
+
+        } catch (\Swift_TransportException $e) {
+            // Rollback Transaction
+            DB::rollback();
+
+            return Reply::error('Please configure SMTP details to add employee. Visit Settings -> notification setting to set smtp '.$e->getMessage(), 'smtp_error');
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Rollback Transaction
+            DB::rollback();
+
+            return Reply::error('Some error occurred when inserting the data. Please try again or contact support '. $e->getMessage());
+        }
+
+
+
+        return Reply::successWithData(__('messages.recordSaved'), ['redirectUrl' => route('employees.index')]);
+    }
+    public function employeeData($request, $employee): void
+    {
+        $employee->employee_id = $request->employee_id;
+        $employee->address = $request->address;
+        $employee->hourly_rate = $request->hourly_rate;
+        $employee->slack_username = $request->slack_username;
+        $employee->department_id = $request->department;
+        $employee->designation_id = $request->designation;
+        $employee->reporting_to = $request->reporting_to;
+        $employee->about_me = $request->about_me;
+        $employee->joining_date = date('Y-m-d', strtotime($request->joining_date));
+        $employee->date_of_birth = $request->date_of_birth ? date('Y-m-d', strtotime($request->date_of_birth)) : null;
+        $employee->calendar_view = 'task,events,holiday,tickets,leaves';
+    //     $employee->probation_end_date = $request->probation_end_date ?  date('Y-m-d', strtotime($request->probation_end_date)) : null;
+    //     $employee->notice_period_start_date = $request->notice_period_start_date ? date('Y-m-d', strtotime($request->notice_period_start_date)) : null;
+    //     $employee->notice_period_end_date = $request->notice_period_end_date ? date('Y-m-d', strtotime($request->notice_period_end_date)) : null;
+    //     $employee->marital_status = $request->marital_status;
+    //     $employee->marriage_anniversary_date = $request->marriage_anniversary_date ?  date('Y-m-d', strtotime($request->marriage_anniversary_date)) : null;
+    //     $employee->employment_type = $request->employment_type;
+    //     $employee->internship_end_date = $request->internship_end_date ? date('Y-m-d', strtotime($request->internship_end_date)) : null;
+    //     $employee->contract_end_date = $request->contract_end_date ? date('Y-m-d', strtotime($request->contract_end_date)) : null;
+    }
+
+    public function getDataFromSheet()
+{
+    $client = new \Google_Client();
+    $client->setApplicationName('Google Sheets API');
+    $client->setScopes([\Google_Service_Sheets::SPREADSHEETS]);
+    $client->setAccessType('offline');
+    // credentials.json is the key file we downloaded while setting up our Google Sheets API
+    $path = __DIR__.'\credentials.json';
+    $client->setAuthConfig($path);
+
+    // configure the Sheets Service
+    $service = new \Google_Service_Sheets($client);
+
+    $spreadsheetId = '1LWV0Snm1q57ht1M9i1SC2GoQCJZty81jtHXfXLBdXQM';
+    $range = 'Sheet1!B2:C'; // Assuming questions are in column A and answers in column B
+
+    $response = $service->spreadsheets_values->get($spreadsheetId, $range);
+    $values = $response->getValues();
+
+    return $values;
+
+}
+public function processData()
+{
+    $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "faq";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "FAQ";
+
+    $values = $this->getDataFromSheet();
+    
+    $data = [];
+    $currentIndex = -1;
+
+    foreach ($values as $row) {
+        $question = $row[0];
+        $answer = $row[1];
+
+        if (!empty($question)) {
+            $currentIndex++;
+            $data[$currentIndex][] = $question;
+        }
+
+        $data[$currentIndex][] = $answer;
+    }
+    return view('tlr::faq', ['values' => $data], $this->data);
+
+    //return $data;
+}
 }

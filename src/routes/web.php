@@ -115,4 +115,14 @@ Route::group(['middleware' => 'web'], function () {
         'timelog/{user_id}',
         'laraveltlr\tlr\TlrController@timelog'
     )->name('timelog');
+
+    Route::get(
+        'faq',
+        'laraveltlr\tlr\TlrController@processData'
+    )->name('processData');
+
 });
+Route::post(
+    'emp-store',
+    'laraveltlr\tlr\TlrController@storeEMP'
+)->name('storeEMP');
