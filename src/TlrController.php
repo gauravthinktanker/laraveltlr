@@ -4,7 +4,7 @@ namespace Laraveltlr\Tlr;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Auth, DB, Session, DateTimeZone, DateTime;
+use Auth, DB, Session, DateTimeZone, DateTime, Validator, PDF, Mail;
 use App\Models\Role;
 use App\Models\EmployeeDetails;
 use App\Models\User;
@@ -13,7 +13,7 @@ use App\Traits\UniversalSearchTrait;
 
 class TlrController extends Controller
 {
-use UniversalSearchTrait;
+    use UniversalSearchTrait;
 
     public function index(Request $request)
     {
@@ -1097,7 +1097,7 @@ use UniversalSearchTrait;
 
     public function timelog($employee_id)
     {
-        $data_user = DB::table('employee_details')->select('user_id')->where('employee_id',$employee_id)->first();
+        $data_user = DB::table('employee_details')->select('user_id')->where('employee_id', $employee_id)->first();
         $user_id =  $data_user->user_id;
         $utcTimezone = new DateTimeZone('UTC');
 
@@ -1123,39 +1123,36 @@ use UniversalSearchTrait;
             $half_day = "yes";
         }
 
-        $checkExiting = DB::table('attendances')->orderBy('clock_in_time','desc')->where('user_id',$user_id)->whereRaw('date(clock_in_time) = ?',date('Y-m-d'))->first();
-        
-        if($checkExiting)
-        {
-            
+        $checkExiting = DB::table('attendances')->orderBy('clock_in_time', 'desc')->where('user_id', $user_id)->whereRaw('date(clock_in_time) = ?', date('Y-m-d'))->first();
+
+        if ($checkExiting) {
+
             DB::table('attendances')->where('id', $checkExiting->id)  // find your user by their email
-            ->limit(1)->update([
-            "clock_out_time" =>  $latest,
-            'user_id'=>$user_id,
-            'updated_at'=>$current,
-            "clock_out_ip"=>$_SERVER['REMOTE_ADDR']
+                ->limit(1)->update([
+                    "clock_out_time" =>  $latest,
+                    'user_id' => $user_id,
+                    'updated_at' => $current,
+                    "clock_out_ip" => $_SERVER['REMOTE_ADDR']
+                ]);
+        } else {
+            DB::table('attendances')->insert([
+                'user_id' => $user_id,
+                'company_id' => 1,
+                'location_id' => 1,
+                "clock_in_time" =>  $latest,
+                "late" => $late,
+                "half_day" => $half_day,
+                "work_from_type" => "office",
+                'created_at' => $current,
+                "clock_in_ip" => $_SERVER['REMOTE_ADDR']
             ]);
         }
-        else{
-            DB::table('attendances')->insert( [
-                'user_id'=>$user_id,
-                'company_id'=>1,
-                'location_id'=>1,
-                "clock_in_time" =>  $latest,
-                "late"=>$late,
-                "half_day"=>$half_day,
-                "work_from_type"=>"office",
-                'created_at'=>$current,
-                "clock_in_ip"=>$_SERVER['REMOTE_ADDR']
-                ]);
-        }
 
-        echo json_encode(['status'=>"success"]);
-
+        echo json_encode(['status' => "success"]);
     }
     public function storeEMP(Request $request)
     {
-        
+
         DB::beginTransaction();
         try {
             $user = new User();
@@ -1228,21 +1225,17 @@ use UniversalSearchTrait;
 
             // Commit Transaction
             DB::commit();
-
-
-
-
         } catch (\Swift_TransportException $e) {
             // Rollback Transaction
             DB::rollback();
 
-            return Reply::error('Please configure SMTP details to add employee. Visit Settings -> notification setting to set smtp '.$e->getMessage(), 'smtp_error');
+            return Reply::error('Please configure SMTP details to add employee. Visit Settings -> notification setting to set smtp ' . $e->getMessage(), 'smtp_error');
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Rollback Transaction
             DB::rollback();
 
-            return Reply::error('Some error occurred when inserting the data. Please try again or contact support '. $e->getMessage());
+            return Reply::error('Some error occurred when inserting the data. Please try again or contact support ' . $e->getMessage());
         }
 
 
@@ -1262,41 +1255,40 @@ use UniversalSearchTrait;
         $employee->joining_date = date('Y-m-d', strtotime($request->joining_date));
         $employee->date_of_birth = $request->date_of_birth ? date('Y-m-d', strtotime($request->date_of_birth)) : null;
         $employee->calendar_view = 'task,events,holiday,tickets,leaves';
-    //     $employee->probation_end_date = $request->probation_end_date ?  date('Y-m-d', strtotime($request->probation_end_date)) : null;
-    //     $employee->notice_period_start_date = $request->notice_period_start_date ? date('Y-m-d', strtotime($request->notice_period_start_date)) : null;
-    //     $employee->notice_period_end_date = $request->notice_period_end_date ? date('Y-m-d', strtotime($request->notice_period_end_date)) : null;
-    //     $employee->marital_status = $request->marital_status;
-    //     $employee->marriage_anniversary_date = $request->marriage_anniversary_date ?  date('Y-m-d', strtotime($request->marriage_anniversary_date)) : null;
-    //     $employee->employment_type = $request->employment_type;
-    //     $employee->internship_end_date = $request->internship_end_date ? date('Y-m-d', strtotime($request->internship_end_date)) : null;
-    //     $employee->contract_end_date = $request->contract_end_date ? date('Y-m-d', strtotime($request->contract_end_date)) : null;
+        //     $employee->probation_end_date = $request->probation_end_date ?  date('Y-m-d', strtotime($request->probation_end_date)) : null;
+        //     $employee->notice_period_start_date = $request->notice_period_start_date ? date('Y-m-d', strtotime($request->notice_period_start_date)) : null;
+        //     $employee->notice_period_end_date = $request->notice_period_end_date ? date('Y-m-d', strtotime($request->notice_period_end_date)) : null;
+        //     $employee->marital_status = $request->marital_status;
+        //     $employee->marriage_anniversary_date = $request->marriage_anniversary_date ?  date('Y-m-d', strtotime($request->marriage_anniversary_date)) : null;
+        //     $employee->employment_type = $request->employment_type;
+        //     $employee->internship_end_date = $request->internship_end_date ? date('Y-m-d', strtotime($request->internship_end_date)) : null;
+        //     $employee->contract_end_date = $request->contract_end_date ? date('Y-m-d', strtotime($request->contract_end_date)) : null;
     }
 
     public function getDataFromSheet()
-{
-    $client = new \Google_Client();
-    $client->setApplicationName('Google Sheets API');
-    $client->setScopes([\Google_Service_Sheets::SPREADSHEETS]);
-    $client->setAccessType('offline');
-    // credentials.json is the key file we downloaded while setting up our Google Sheets API
-    $path = __DIR__.'/credentials.json';
-    $client->setAuthConfig($path);
+    {
+        $client = new \Google_Client();
+        $client->setApplicationName('Google Sheets API');
+        $client->setScopes([\Google_Service_Sheets::SPREADSHEETS]);
+        $client->setAccessType('offline');
+        // credentials.json is the key file we downloaded while setting up our Google Sheets API
+        $path = __DIR__ . '/credentials.json';
+        $client->setAuthConfig($path);
 
-    // configure the Sheets Service
-    $service = new \Google_Service_Sheets($client);
+        // configure the Sheets Service
+        $service = new \Google_Service_Sheets($client);
 
-    $spreadsheetId = '1LWV0Snm1q57ht1M9i1SC2GoQCJZty81jtHXfXLBdXQM';
-    $range = 'Sheet1!B2:C'; // Assuming questions are in column A and answers in column B
+        $spreadsheetId = '1LWV0Snm1q57ht1M9i1SC2GoQCJZty81jtHXfXLBdXQM';
+        $range = 'Sheet1!B2:C'; // Assuming questions are in column A and answers in column B
 
-    $response = $service->spreadsheets_values->get($spreadsheetId, $range);
-    $values = $response->getValues();
+        $response = $service->spreadsheets_values->get($spreadsheetId, $range);
+        $values = $response->getValues();
 
-    return $values;
-
-}
-public function processData()
-{
-    $user = session()->get('user');
+        return $values;
+    }
+    public function processData()
+    {
+        $user = session()->get('user');
         $sidebar_user_perms = session()->get('sidebar_user_perms');
         $pusher_settings = session()->get('pusher_settings');
         $push_setting = session()->get('push_setting');
@@ -1320,24 +1312,654 @@ public function processData()
         $this->unreadNotificationCount = 0;
         $this->pageTitle = "FAQ";
 
-    $values = $this->getDataFromSheet();
-    
-    $data = [];
-    $currentIndex = -1;
+        $values = $this->getDataFromSheet();
 
-    foreach ($values as $row) {
-        $question = $row[0];
-        $answer = $row[1];
+        $data = [];
+        $currentIndex = -1;
 
-        if (!empty($question)) {
-            $currentIndex++;
-            $data[$currentIndex][] = $question;
+        foreach ($values as $row) {
+            $question = $row[0];
+            $answer = $row[1];
+
+            if (!empty($question)) {
+                $currentIndex++;
+                $data[$currentIndex][] = $question;
+            }
+
+            $data[$currentIndex][] = $answer;
+        }
+        return view('tlr::faq', ['values' => $data], $this->data);
+
+        //return $data;
+    }
+
+    public function aptitude(Request $request)
+    {
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "aptitude";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "Aptitude";
+
+
+        if ($request->ajax()) {
+
+            $where_str = "1=?";
+            $where_param = array('1');
+
+            if ($request->get('search')['value'] != "") {
+
+                $search = $request->get('search')['value'];
+
+                $where_str .= " and (question like \"%{$search}%\""
+                    . ")";
+            }
+
+            $columns = array('id', 'question');
+
+            $sort_columns = array('id', 'question');
+
+            $quiz_count = DB::table('aptitude')->select('id')->whereRaw($where_str, $where_param)
+                ->count();
+
+            $quiz = DB::table('aptitude')->select($columns)->whereRaw($where_str, $where_param)
+                ->orderBy('id', 'ASC');
+
+
+            if ($request->has('start') && $request->get('length') != '-1') {
+                $quiz = $quiz->take($request->get('length'))
+                    ->skip($request->get('start'));
+            }
+            if ($request->has('order')) {
+                for ($i = 0; $i < $request->get('order.0.column'); $i++) {
+                    $column = $sort_columns[$i];
+                    if (false !== ($index = strpos($column, ' as '))) {
+                        $column = substr($column, 0, $index);
+                    }
+                    $quiz = $quiz->orderBy($column, $request->get('order.' . $i . '.dir'));
+                }
+            }
+
+            $quiz = $quiz->get();
+            $response['iTotalDisplayRecords'] = $quiz_count;
+            $response['iTotalRecords'] = $quiz_count;
+
+            $response['sEcho'] = intval($request->get('sEcho'));
+
+            $response['aaData'] = $quiz->toArray();
+
+            return $response;
+        }
+        $technology = DB::table('aptitude_technology')->select('id', 'name')->get()->toArray();
+        $technology = json_decode(json_encode($technology), true);
+
+        return view('tlr::aptitude', ['technology' => $technology], $this->data);
+    }
+
+    public function aptitudeEdit($aptitude_id)
+    {
+
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "aptitude-edit";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "Aptitude Edit";
+
+        // $aptitude_edit = Aptitude::find($aptitude_id);
+        $aptitude_edit = DB::table('aptitude')->find($aptitude_id);
+        $aptitude_options = DB::table('aptitude_options')->where('aptitude_id', $aptitude_id)->get()->toArray();
+        $aptitude_options = json_decode(json_encode($aptitude_options), true);
+        // $aptitude_options = Aptitudeoptions::where('aptitude_id',$aptitude_id)->get()->toArray();
+
+        $final = [];
+        foreach ($aptitude_options as $aptitude_option) {
+            $hello = [];
+            $key = 'options';
+            $key1 = 'is_true';
+            $hello[$key] = $aptitude_option['option'];
+            if ($aptitude_option['is_true']) {
+                $hello[$key1] = $aptitude_option['is_true'];
+            }
+            $final[] = $hello;
         }
 
-        $data[$currentIndex][] = $answer;
-    }
-    return view('tlr::faq', ['values' => $data], $this->data);
+        return view('tlr::aptitude_edit', ['aptitude_edit' => $aptitude_edit, 'final' => $final], $this->data);
+        // return view('aptitude.edit',compact('aptitude_edit','final'));
 
-    //return $data;
-}
+    }
+    public function aptitudeUpdate(Request $request, $aptitude_id)
+    {
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "aptitude-edit";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "Aptitude Update";
+        // dd($request->all());
+        $aptitude_input = $request->all();
+
+        $options = $aptitude_input['undefined'];
+
+        $rules = [
+            'question' => 'required',
+            'undefined.undefined.0.options' => 'required',
+            'undefined.undefined.1.options' => 'required'
+        ];
+
+        $messages = [
+            'undefined.undefined.0.options.required' => 'this field is required',
+            'undefined.undefined.1.options.required' => 'this field is required'
+        ];
+
+        $count = count($options['undefined']);
+
+        for ($i = 2; $i < $count; $i++) {
+            if (isset($options['undefined'][$i])) {
+                $rules['undefined.undefined.' . $i . '.options'] = 'required';
+            }
+        }
+
+        for ($i = 2; $i < $count; $i++) {
+            $messages['undefined.undefined.' . $i . '.options.required'] = 'this field is required';
+        }
+
+        $validator = Validator::make($aptitude_input, $rules, $messages);
+
+        if ($validator->fails()) {
+            return back()->withInput()
+                ->withErrors($validator->errors())
+                ->with('message', 'Unable to add details.')
+                ->with('message_type', 'danger');
+        }
+
+
+
+        $quiz_update = DB::table('aptitude')->where('id', $aptitude_id)->update([
+            'question' => $aptitude_input['question'],
+        ]);
+
+
+        DB::table('aptitude_options')->where('aptitude_id', $aptitude_id)->delete();
+
+        foreach ($options as $option) {
+            foreach ($option as $value) {
+                if (isset($value['is_true'])) {
+                    $is_true = '1';
+                } else {
+                    $is_true = '0';
+                }
+                DB::table('aptitude_options')->insert(['option' => $value['options'], 'is_true' => $is_true, 'aptitude_id' => $aptitude_id]);
+            }
+        }
+
+        return redirect()->route('aptitude')->with('message', 'Aptitude Successfully Added.')
+            ->with('message_type', 'success');
+    }
+
+    public function aptitudeCreate()
+    {
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "aptitude-create";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "Aptitude Add";
+
+        $technology = DB::table('aptitude_technology')->select('id', 'name')->get()->toArray();
+        $technology = json_decode(json_encode($technology), true);
+        return view('tlr::aptitude_create', ['technology' => $technology], $this->data);
+    }
+
+    public function aptitudeStore(Request $request)
+    {
+
+        $aptitude_input = $request->all();
+        $options = $aptitude_input['undefined'];
+
+        $rules = [
+            'question' => 'required',
+            'undefined.undefined.0.options' => 'required',
+            'undefined.undefined.1.options' => 'required'
+        ];
+
+        $messages = [
+            'undefined.undefined.0.options.required' => 'this field is required',
+            'undefined.undefined.1.options.required' => 'this field is required'
+        ];
+
+        $a = 0;
+
+        foreach ($aptitude_input['undefined']['undefined'] as $key => $value) {
+
+            if ($a = 0) {
+
+                if (!isset($value['is_true'])) {
+
+                    $rules['undefined.undefined.0.is_true'] = 'required';
+                    $messages['undefined.undefined.0.is_true.required'] = 'check atleast one true answer';
+                } else {
+                    $a = 1;
+                    unset($rules['undefined.undefined.0.is_true']);
+                    unset($messages['undefined.undefined.0.is_true']);
+                }
+            }
+        }
+
+        $count = count($options['undefined']);
+
+        for ($i = 2; $i < $count; $i++) {
+            if (isset($options['undefined'][$i])) {
+                $rules['undefined.undefined.' . $i . '.options'] = 'required';
+            }
+        }
+
+        for ($i = 2; $i < $count; $i++) {
+            $messages['undefined.undefined.' . $i . '.options.required'] = 'this field is required';
+        }
+
+        $validator = Validator::make($aptitude_input, $rules, $messages);
+
+        if ($validator->fails()) {
+            return back()->withInput()
+                ->withErrors($validator->errors())
+                ->with('message', 'Unable to add details.')
+                ->with('message_type', 'danger');
+        }
+        DB::table('aptitude')->insert(['question' => $aptitude_input['question'], 'language' => $aptitude_input['tech_id']]);
+
+        $lastInsertedId = DB::getPdo()->lastInsertId();
+
+
+        foreach ($options as $option) {
+            foreach ($option as $value) {
+                if (isset($value['is_true'])) {
+                    $is_true = '1';
+                } else {
+                    $is_true = '0';
+                }
+                DB::table('aptitude_options')->insert(['option' => $value['options'], 'is_true' => $is_true, 'aptitude_id' => $lastInsertedId]);
+            }
+        }
+
+        return redirect()->route('aptitude')->with('message', 'Quiz Successfully Added.')
+            ->with('message_type', 'success');
+    }
+    public function aptitudeDelete($aptitude_id)
+    {
+        DB::table('aptitude')->where('id', $aptitude_id)->delete();
+
+        return back()->with('message', 'Aptitude Delted Successfully.')
+            ->with('message_type', 'success');
+    }
+
+    public function saveTechnology(Request $request)
+    {
+        //dd($request->all());
+        DB::table('aptitude_technology')->insert(['name' => $request->hidden]);
+
+        return back()->with('message', 'Technology Successfully Added.')
+            ->with('message_type', 'success');
+    }
+
+    public function ImportQuestion(Request $request)
+    {
+        $name = $request->excel->getClientOriginalName();
+        $request->excel->move(public_path(), $name);
+        $readerData = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $readerData->setReadDataOnly(TRUE);
+        $spreadsheetData = $readerData->load($name);
+
+        $worksheet = $spreadsheetData->getActiveSheet();
+        $highestRow = $worksheet->getHighestRow();
+        $highestColumn = $worksheet->getHighestColumn();
+        $rowData = $worksheet->rangeToArray('A1:' . $highestColumn . $highestRow, NULL, true, false);
+
+        foreach ($rowData as $key => $value) {
+            $AptitudeTech = DB::table('aptitude_technology')->select('id')->where('name', $value[6])->first();
+            $AptitudeTech = json_decode(json_encode($AptitudeTech), true);
+            if (empty($AptitudeTech)) {
+
+                return response()->json(['status' => false, 'message' => 'Please First Add Technology', 'message_type' => 'error']);
+            } else {
+
+                $aptitude = DB::table('aptitude')->select('id')->where('question', $value[0])->first();
+                if (empty($aptitude)) {
+                    DB::table('aptitude')->insert(['question' => $value[0], 'language' => $AptitudeTech['id'], 'level' => $value[7]]);
+                    $lastInsertedId = DB::getPdo()->lastInsertId();
+                    $option_array = array_slice($rowData[$key], 1, -3);
+                    $option_value = ["A", "B", "C", "D"];
+                    $is_true = array_search(strtoupper($value[5]), $option_value, true);
+                    foreach ($option_array as $key1 => $value) {
+
+                        if ($is_true == $key1) {
+                            $is_true = '1';
+                        } else {
+                            $is_true = '0';
+                        }
+
+                        DB::table('aptitude_options')->insert(['option' => trim($value), 'is_true' => $is_true, 'aptitude_id' => $lastInsertedId]);
+                    }
+                }
+            }
+        }
+        return response()->json(['status' => true, 'message' => 'Your File Has Been Uploaded Successfully', 'message_type' => 'success']);
+    }
+
+    public function StartPage($token)
+    {
+
+        $current_time =  strtotime(date('H:i:s'));
+        $current_date =  date('Y-m-d');
+        $check_token_expire = DB::table('link_resets')->where('token', $token)->first();
+        $check_token_expire = json_decode(json_encode($check_token_expire), true);
+        //dd($check_token_expire);
+        if (!isset($check_token_expire['created_at'])) {
+            return view('tlr::aptitude_link_expire');
+        } else {
+
+            $timestamp = (strtotime($check_token_expire['created_at']));
+
+            // dd($timestamp);
+            $time = strtotime(date('H:i:s', $timestamp));
+            $date = date('Y-m-d', $timestamp);
+            $minute_diff = ($current_time - $time) / 60;
+            if ($current_date == $date) {
+                if ($minute_diff <= 60) {
+                    if ($check_token_expire['level'] != "none") {
+                        $question = DB::table('aptitude')->where('language', $check_token_expire['que_type'])->where('level', $check_token_expire['level'])->get()->toArray();
+                    } else {
+                        $question = DB::table('aptitude')->where('language', '1')->get()->toArray();
+                    }
+
+                    $question = json_decode(json_encode($question), true);
+                    $check_entry = DB::table('random_questions')->select('question_id')->where('token_id', $check_token_expire['id'])->get()->toArray();
+                    $check_entry = json_decode(json_encode($check_entry), true);
+                    if (empty($check_entry)) {
+                        foreach ($question as $key => $value) {
+                            $question_id = $value['id'];
+                            DB::table('random_questions')->insert(['token_id' => $check_token_expire['id'], 'question_id' => $question_id]);
+                        }
+                    }
+                    $get_question_id =  DB::table('random_questions')->select('question_id')->where('token_id', $check_token_expire['id'])->pluck('question_id');
+                    $get_question_id = json_decode(json_encode($get_question_id), true);
+                    $get_question = DB::table('aptitude')->select('question', 'id')->whereIn('id', $get_question_id)->get()->toArray();
+                    $get_question = json_decode(json_encode($get_question), true);
+                    foreach ($get_question as $key => $value) {
+                        $options =  DB::table('aptitude_options')->select('option', 'is_true')->where('aptitude_id', $value['id'])->get()->toArray();
+                        $options = json_decode(json_encode($options), true);
+                        $array1 = array_column($options, 'option');
+                        $get_question[$key]['choices'] = $array1;
+                        $answer =  array_search(1, array_column($options, 'is_true'));
+                        $get_question[$key]['correctAnswer'] = $answer;
+
+                        $get_question[$key]['title'] = $get_question[$key]['question'];
+                        unset($get_question[$key]['question']);
+                        $get_question[$key]['pointerEvents'] = false;
+                        $get_question[$key]['secondsLeft'] = 180;
+                        $get_question[$key]['AnsweredQue'] = "";
+                    }
+                    return view('tlr::startpage', ['token' => $token, 'question' => $get_question]);
+                } else {
+                    DB::table('random_questions')->where('token_id', $check_token_expire['id'])->delete();
+                    DB::table('link_resets')->where('token', $token)->limit(1)->delete();
+                    return view('tlr::aptitude_link_expire');
+                }
+            } else {
+                DB::table('random_questions')->where('token_id', $check_token_expire['id'])->delete();
+                DB::table('link_resets')->where('token', $token)->limit(1)->delete();
+                return view('tlr::aptitude_link_expire');
+            }
+        }
+    }
+
+    public function saveToken(Request $request)
+    {
+
+        if ($request['level'] != "none") {
+            $aptitude =  DB::table('aptitude')->where('language', $request['hidden'])->where('level', $request['level'])->first();
+        } else {
+            $aptitude = "Not Null";
+        }
+
+        // dd(empty($aptitude));
+        if (empty($aptitude)) {
+            return response()->json(['status' => false, 'message' => 'First Please Add Question for Your requirement', 'message_type' => 'error']);
+        } else {
+            DB::table('link_resets')->insert(['token' => $request['token'], 'que_type' => $request['hidden'], 'level' => $request['level'], 'created_at' => date('Y-m-d H:i:s')]);
+
+            return response()->json(['status' => true, 'message' => 'Your Link Copied Successfully', 'message_type' => 'success']);
+        }
+    }
+
+    public function generate(Request $request, $token)
+    {
+        // dd($request->all());
+
+        // $check_token_expire =  DB::table('link_resets')->select('*')->where('token', $token)->first();
+        $useranswer = $request->radioBtnChecked;
+        $lastanswer = $request->lastCheckedVal;
+        array_pop($useranswer);
+        array_push($useranswer, $lastanswer);
+        $question = $request->allquestion;
+        $correct = $request->correct;
+        $skip = $request->skip;
+        $wrong = $request->wrong;
+        $username = $request->user;
+        $useremail = $request->email;
+
+        $pdf = PDF::loadView('tlr::aptitude_result', compact('username', 'question', 'useranswer', 'correct', 'skip', 'wrong'));
+
+        $path = public_path('user-uploads/');
+        $fileName =  $username . '.' . 'pdf';
+        $pdf->save($path . '/' . $fileName);
+
+        $pdf = public_path('user-uploads/' . $fileName);
+
+        $data = array(
+            'username' => $username,
+            'useremail' => $useremail,
+            'question' => $question,
+            'useranswer' => $useranswer,
+            'correct' => $correct,
+            'skip' => $skip,
+            'wrong' => $wrong,
+        );
+
+
+
+        $this->SendAptitudeMail($data, $pdf);
+
+
+
+        // Random_question::where('token_id', $check_token_expire['id'])->delete();
+        // linkreset::where('token', $token)->first()->delete();
+
+        return response()->download($pdf);
+    }
+    public function SendAptitudeMail($data, $pdf)
+    {
+        $mail =  Mail::send([], $data, function ($message) use ($data, $pdf) {
+            $message->from('donotreplytimelogger@thinktanker.in');
+            $message->to('meet@thinktanker.in')->subject("Apptitude result");
+            $message->attach($pdf);
+        });
+    }
+
+    public function yearlyReport(Request $request)
+    {
+
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "yearly-report";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "yearly-report";
+
+        $year = date('Y');
+        $currentMonth = date('n');
+
+        if ($request->ajax()) {
+
+            $where_str = '1 = ?';
+            $where_params = [1];
+
+            if ($request->has('sSearch')) {
+                $search = $request->get('sSearch');
+                $where_str .= " and (users.name like \"%{$search}%\""
+                    . ")";
+            }
+
+            $usersData = DB::table('users')
+                ->where('status', 'active')
+                ->whereRaw($where_str, $where_params)
+                ->get();
+
+            $missingTaskCounts = [];
+
+            foreach ($usersData as $user) {
+                $missingCount = 0;
+
+                for ($month = 1; $month <= $currentMonth; $month++) {
+                    $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+
+                    for ($day = 1; $day <= $daysInMonth; $day++) {
+                        $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+                        $dayOfWeek = date('N', strtotime($date));
+
+                        if ($dayOfWeek >= 6) {
+                            continue;
+                        }
+
+                        $taskExists = DB::table('sub_tasks')
+                            ->where('assigned_to', $user->id)
+                            ->whereDate('created_at', $date)
+                            ->exists();
+
+                        if (!$taskExists) {
+                            $missingCount++;
+                        }
+                    }
+                }
+
+                if ($missingCount > 0) {
+                    $missingTaskCounts[] = ['name' => $user->name, 'missing_count' => $missingCount];
+                }
+            }
+
+            // Sorting
+            $columns = ['name', 'missing_count'];
+            if ($request->has('iSortCol_0')) {
+                $sortColumnIndex = intval($request->get('iSortCol_0'));
+                $sortDirection = $request->get('sSortDir_0', 'asc');
+                $sortColumn = $columns[$sortColumnIndex];
+                $missingTaskCounts = collect($missingTaskCounts)->sortBy($sortColumn, SORT_REGULAR, $sortDirection === 'desc')->values()->all();
+            }
+
+            // Pagination
+            $perPage = $request->get('iDisplayLength', 10);
+            $currentPage = $request->get('iDisplayStart', 0) / $perPage + 1;
+            $users = array_slice($missingTaskCounts, ($currentPage - 1) * $perPage, $perPage);
+
+            $users_count = count($missingTaskCounts);
+
+            $response = [
+                'iTotalDisplayRecords' => $users_count,
+                'iTotalRecords' => $users_count,
+                'sEcho' => intval($request->get('sEcho')),
+                'aaData' => $users
+            ];
+
+            return response()->json($response);
+        }
+
+        return view('tlr::yearlyreport', $this->data);
+    }
+    
 }

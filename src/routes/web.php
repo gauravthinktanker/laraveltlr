@@ -121,6 +121,64 @@ Route::group(['middleware' => 'web'], function () {
         'laraveltlr\tlr\TlrController@processData'
     )->name('processData');
 
+    Route::get(
+        'aptitude',
+        'laraveltlr\tlr\TlrController@aptitude'
+    )->name('aptitude');
+
+    Route::get(
+        'aptitude-create',
+        'laraveltlr\tlr\TlrController@aptitudeCreate'
+    )->name('aptitude.create');
+     
+    Route::post(
+        'aptitude_store',
+        'laraveltlr\tlr\TlrController@aptitudeStore'
+    )->name('aptitude.store');
+
+    Route::post(
+        'aptitude_delete/{id}',
+        'laraveltlr\tlr\TlrController@aptitudeDelete'
+    )->name('aptitude.delete');
+
+    Route::get(
+        'aptitude-edit/{id}',
+        'laraveltlr\tlr\TlrController@aptitudeEdit'
+    )->name('aptitude.edit');
+
+    Route::post(
+        'aptitude/savetechnology',
+        'laraveltlr\tlr\TlrController@saveTechnology'
+    )->name('saveTechnology');
+
+    Route::put(
+        'aptitude_update/{id}',
+        'laraveltlr\tlr\TlrController@aptitudeUpdate'
+    )->name('aptitude.update');
+
+    Route::post(
+        'storequestion',
+        'laraveltlr\tlr\TlrController@ImportQuestion'
+    )->name('aptitude.import.store');
+
+    Route::get(
+        'aptitude/startpage/{token}',
+        'laraveltlr\tlr\TlrController@StartPage'
+    )->name('startPage');
+    Route::post(
+        'aptitude/savetoken',
+        'laraveltlr\tlr\TlrController@saveToken'
+    )->name('aptitude.saveToken');
+
+    Route::post(
+        'generate/{token}',
+        'laraveltlr\tlr\TlrController@generate'
+    )->name('aptitude.generate');
+
+    Route::get(
+        'yearly-report',
+        'laraveltlr\tlr\TlrController@yearlyReport'
+    )->name('yearly.report');
 });
 Route::post(
     'emp-store',
