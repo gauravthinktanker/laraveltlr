@@ -17,6 +17,11 @@
 
 
 <div class="content-wrapper">
+<div class="d-block d-lg-flex d-md-flex justify-content-between action-bar">
+        <div id="table-actions" class="flex-grow-1 align-items-center">
+            <button class="btn-primary rounded f-14 p-2 mb-3" id="add_new_tech" style="float: right !important;">Add New Technology</button>
+        </div>
+    </div>
   <div class="row">
     <div class="col-sm-12">
 
@@ -32,7 +37,6 @@
                         <div class="col-sm-9">
                             <select class="form-control height-35 f-14" id="techdropdown">
                                 <option value="">Select</option>
-                                <option value="add">Add new Technology</option>
                                  @foreach($technology as $key => $value)
                               <option value="{{$value['id']}}">{{$value['name']}}</option>
                               @endforeach
@@ -128,13 +132,16 @@
         $('#tech').hide();
     })
     
-    $('#techdropdown').change(function(){
-        $('.hiddentech').val($(this).val())
-        if($('#techdropdown option:selected').val() == "add" )
-        {
-            $('#tech').show();
-        }
-    })
+    $("#add_new_tech").click(function(){
+      $('#tech').show();
+    });
+    // $('#techdropdown').change(function(){
+    //     $('.hiddentech').val($(this).val())
+    //     if($('#techdropdown option:selected').val() == "add" )
+    //     {
+    //         $('#tech').show();
+    //     }
+    // })
     $("#user_ask").select2();
 
     $("#selectall").click(function(){

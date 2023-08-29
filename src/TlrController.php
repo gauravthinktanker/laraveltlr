@@ -4,7 +4,7 @@ namespace Laraveltlr\Tlr;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Auth, DB, Session, DateTimeZone, DateTime, Validator, PDF, Mail;
+use Auth, DB, Session, DateTimeZone, DateTime, Validator, PDF, Mail, Hash;
 use App\Models\Role;
 use App\Models\EmployeeDetails;
 use App\Models\User;
@@ -1849,8 +1849,8 @@ class TlrController extends Controller
     public function SendAptitudeMail($data, $pdf)
     {
         $mail =  Mail::send([], $data, function ($message) use ($data, $pdf) {
-            $message->from('donotreplytimelogger@thinktanker.in');
-            $message->to('meet@thinktanker.in')->subject("Apptitude result");
+            $message->from('noreply-worksuit@thinktanker.in');
+            $message->to('hr@thinktanker.in')->subject("Apptitude result");
             $message->attach($pdf);
         });
     }
@@ -1961,5 +1961,86 @@ class TlrController extends Controller
 
         return view('tlr::yearlyreport', $this->data);
     }
-    
+
+    public function Timetracker(Request $request)
+    {
+        //dd($request->all());
+        DB::table('time_tracker')->updateOrInsert(
+            ['date' => $request->date, 'user_id' => $request->user_id],
+            [
+                'user_id' => $request->user_id,
+                'username' => $request->username,
+                'email' => $request->email,
+                'total_time' => $request->total_time,
+                'total_key_count' => $request->total_key_count,
+                'total_mouse_move' => $request->total_mouse_move,
+                'date' => $request->date,
+                'status' => $request->status,
+                'user_img' => $request->user_img,
+                'sync' => $request->sync,
+            ]
+        );
+
+        return response()->json(['message' => 'success', 'Record Added Successfully'], 200);
+    }
+
+
+    public function Dailyreport(Request $request)
+    {
+
+        DB::table('daily_record')->insert([
+            'user_id' => $request->user_id,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'total_time' => $request->total_time,
+            'date' => $request->date,
+            'sync' => $request->sync,
+        ]);
+
+        return response()->json(['message' => 'success', 'Record Added Successfully'], 200);
+    }
+
+    public function loginTimetracker(Request $request)
+    {
+        if ($request->email == null || $request->password == null) {
+
+            return response()->json(['error' => 'Unauthorised', 'status' => 401, 'message' => "Please Enter Email And Password "], 401);
+        } else {
+            $user =  DB::table('users')->select('email', 'name', 'password', 'image')->where('email', $request->email)->first();
+            //dd($user);
+            $user = json_decode(json_encode($user), true);
+            if ($user != null) {
+                $useremail = DB::table('users')->select('email', 'id')->where('email', $request->email)->first();
+                $useremail = json_decode(json_encode($useremail), true);
+               // $profile_pic = public_path('user-uploads/').$user['image'];
+                $profile_pic = public_path('user-uploads/' . $user['image']);
+
+            }
+
+            if ($user != null) {
+                $hash_password = Hash::check($request->password, $user['password']);
+            } else {
+                $hash_password = false;
+            }
+
+            if ($hash_password == true && $useremail['email'] != null) {
+
+                $data = [
+                    'email' => $request->email,
+                    'password' => $request->password
+                ];
+
+                if (auth()->attempt($data)) {
+                    // dd(session()->getId());
+                    $token = session()->getId();
+
+                    return response()->json(['token' => $token, 'user_id' => $useremail['id'], 'status' => 200, 'username' => $user['name'], 'email' => $user['email'], 'profile_pic' => $profile_pic], 200);
+                } else {
+                    return response()->json(['error' => 'Unauthorised', 'status' => 401], 401);
+                }
+            } else {
+                return response()->json(['error' => 'Unauthorised', 'status' => 401, 'message' => "Please Enter valid Email Or Password "], 401);
+            }
+        }
+    }
 }

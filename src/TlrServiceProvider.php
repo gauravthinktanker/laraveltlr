@@ -12,6 +12,7 @@ class TlrServiceProvider extends ServiceProvider
     public function register(): void
     {
         include __DIR__.'/routes/web.php';
+        include __DIR__.'/routes/api.php';
         $this->app->make('Laraveltlr\Tlr\TlrController');
     }
 
