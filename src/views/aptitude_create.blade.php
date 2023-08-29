@@ -35,14 +35,27 @@
                         <div class="form-group">
                         <label for="companyname" class="col-sm-2 mt-2 form-label">Technology</label>
                         <div class="col-sm-9">
-                            <select class="form-control height-35 f-14" id="techdropdown">
+                            <select class="form-control height-35 f-14" id="techdropdown" name="tech_id">
                                 <option value="">Select</option>
                                  @foreach($technology as $key => $value)
                               <option value="{{$value['id']}}">{{$value['name']}}</option>
                               @endforeach
                             </select>
+                            <?= $errors->first('tech_id',"<span class='text-danger'>:message</span>");?>
                         </div>
                         </div>
+                        <div class="form-group">
+                        <label for="level" class="col-sm-2 mt-2 form-label">Level</label>
+                        <div class="col-sm-9">
+                        <select class="form-control height-35 f-14" name="level" id="leveltype">
+                                <option value="">Please Select</option>
+                                <option value="fresher">Fresher</option>
+                                <option value="junior">Junior</option>
+                                <option value="senior">Senior</option>
+                            </select>
+                            <?= $errors->first('level',"<span class='text-danger'>:message</span>");?>
+                        </div>
+                            </div>
             <div class="form-group">
             <label for="companyname" class="col-sm-2 mt-2 form-label">Questions</label>
               <div class="col-sm-9">

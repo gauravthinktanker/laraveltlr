@@ -1588,6 +1588,8 @@ class TlrController extends Controller
 
         $rules = [
             'question' => 'required',
+            'tech_id' => 'required',
+            'level' => 'required',
             'undefined.undefined.0.options' => 'required',
             'undefined.undefined.1.options' => 'required'
         ];
@@ -1628,14 +1630,14 @@ class TlrController extends Controller
         }
 
         $validator = Validator::make($aptitude_input, $rules, $messages);
-
+        
         if ($validator->fails()) {
             return back()->withInput()
                 ->withErrors($validator->errors())
                 ->with('message', 'Unable to add details.')
                 ->with('message_type', 'danger');
         }
-        DB::table('aptitude')->insert(['question' => $aptitude_input['question'], 'language' => $aptitude_input['tech_id']]);
+        DB::table('aptitude')->insert(['question' => $aptitude_input['question'], 'language' => $aptitude_input['tech_id'],'level' => $aptitude_input['level']]);
 
         $lastInsertedId = DB::getPdo()->lastInsertId();
 
