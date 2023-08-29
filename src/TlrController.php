@@ -2015,7 +2015,7 @@ class TlrController extends Controller
                 $useremail = DB::table('users')->select('email', 'id')->where('email', $request->email)->first();
                 $useremail = json_decode(json_encode($useremail), true);
                // $profile_pic = public_path('user-uploads/').$user['image'];
-                $profile_pic = public_path('user-uploads/' . $user['image']);
+               $profile_pic = asset('/user-uploads/avatar/' . $user['image']);
 
             }
 
