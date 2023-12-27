@@ -179,6 +179,16 @@ Route::group(['middleware' => 'web'], function () {
         'yearly-report',
         'laraveltlr\tlr\TlrController@yearlyReport'
     )->name('yearly.report');
+    Route::get(
+        'time-tracker',
+        'laraveltlr\tlr\TlrController@timeTracker'
+    )->name('time.tracker');
+
+    Route::get(
+        'showImage/{user_id}/{start_date}/{end_date}',
+        'laraveltlr\tlr\TlrController@showImage'
+    )->name('showImage');
+
 });
 Route::post(
     'emp-store',

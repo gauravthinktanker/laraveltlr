@@ -10,6 +10,10 @@ use App\Models\EmployeeDetails;
 use App\Models\User;
 use App\Helper\Reply;
 use App\Traits\UniversalSearchTrait;
+use Aws\S3\S3Client;
+use Carbon\Carbon;
+
+use Illuminate\Support\Facades\Storage;
 
 class TlrController extends Controller
 {
@@ -248,7 +252,7 @@ class TlrController extends Controller
             foreach ($array_data as $key => $value) {
                 $team_member = DB::table("users")->select('name', 'id')->where('id', $value['user_id'])->where('status', 'active')->get()->toArray();
 
-                $topic =  DB::table("topic")->select('topic', 'id')->where('id', $value['topic_id'])->get()->toArray();
+                $topic = DB::table("topic")->select('topic', 'id')->where('id', $value['topic_id'])->get()->toArray();
 
                 $users = array_column($team_member, 'name');
                 $topics = array_column($topic, 'topic');
@@ -373,7 +377,7 @@ class TlrController extends Controller
             foreach ($array_data as $key => $value) {
                 $date = strtr($value['date'], '/', '-');
                 $month = date('m', strtotime($date));
-                $sku  = $month;
+                $sku = $month;
                 // dd($sku);
                 if (array_key_exists($month, $carry)) {
 
@@ -444,7 +448,7 @@ class TlrController extends Controller
             return response()->json(["participant" => $participant]);
         }
 
-        $topic =  DB::table("topic")->select('topic', 'id')->get()->pluck('topic', 'id')->toArray();
+        $topic = DB::table("topic")->select('topic', 'id')->get()->pluck('topic', 'id')->toArray();
         unset($topic[10]);
         unset($topic[11]);
 
@@ -726,7 +730,7 @@ class TlrController extends Controller
                 ->select('id', 'topic', 'point')
                 ->whereRaw($where_str, $where_params);
 
-            $user_count =  DB::table("topic")
+            $user_count = DB::table("topic")
                 ->whereRaw($where_str, $where_params)
                 ->count();
 
@@ -807,8 +811,8 @@ class TlrController extends Controller
         ]);
 
         DB::table('topic')->updateOrInsert([
-            "topic" =>  $request->topic,
-            "point" =>  $request->point,
+            "topic" => $request->topic,
+            "point" => $request->point,
         ]);
 
         return redirect()->route('topic.index')
@@ -861,8 +865,8 @@ class TlrController extends Controller
 
         //  $topic->save();
         DB::table('topic')->updateOrInsert(['id' => $id], [
-            "topic" =>  $request->topic,
-            "point" =>  $request->point,
+            "topic" => $request->topic,
+            "point" => $request->point,
         ]);
 
         return redirect()->route('topic.index')
@@ -999,9 +1003,9 @@ class TlrController extends Controller
 
         $phone_num = implode(',', $services_master['phone_num']);
         DB::table('services')->updateOrInsert([
-            "person_name" =>  $request->person_name,
-            "category" =>  $request->category,
-            "phone_num" =>  $phone_num,
+            "person_name" => $request->person_name,
+            "category" => $request->category,
+            "phone_num" => $phone_num,
         ]);
 
         if ($services_master['save_button'] == "save") {
@@ -1060,9 +1064,9 @@ class TlrController extends Controller
         $services_master = $request->all();
         $phone_num = implode(',', $services_master['phone_num']);
         DB::table('services')->updateOrInsert(['id' => $rowid], [
-            "person_name" =>  $request->person_name,
-            "category" =>  $request->category,
-            "phone_num" =>  $phone_num,
+            "person_name" => $request->person_name,
+            "category" => $request->category,
+            "phone_num" => $phone_num,
         ]);
         if ($services_master['save_button'] == "save") {
             return redirect()->back()
@@ -1089,7 +1093,7 @@ class TlrController extends Controller
         $cat_value = $category_data['newval'];
 
         $cat_id = DB::table('category')->insertGetId([
-            "category_name" =>  $cat_value
+            "category_name" => $cat_value
         ]);
 
         return $cat_id;
@@ -1098,7 +1102,7 @@ class TlrController extends Controller
     public function timelog($employee_id)
     {
         $data_user = DB::table('employee_details')->select('user_id')->where('employee_id', $employee_id)->first();
-        $user_id =  $data_user->user_id;
+        $user_id = $data_user->user_id;
         $utcTimezone = new DateTimeZone('UTC');
 
         $date = date('Y-m-d H:i:s');
@@ -1129,7 +1133,7 @@ class TlrController extends Controller
 
             DB::table('attendances')->where('id', $checkExiting->id)  // find your user by their email
                 ->limit(1)->update([
-                    "clock_out_time" =>  $latest,
+                    "clock_out_time" => $latest,
                     'user_id' => $user_id,
                     'updated_at' => $current,
                     "clock_out_ip" => $_SERVER['REMOTE_ADDR']
@@ -1139,7 +1143,7 @@ class TlrController extends Controller
                 'user_id' => $user_id,
                 'company_id' => 1,
                 'location_id' => 1,
-                "clock_in_time" =>  $latest,
+                "clock_in_time" => $latest,
                 "late" => $late,
                 "half_day" => $half_day,
                 "work_from_type" => "office",
@@ -1630,14 +1634,14 @@ class TlrController extends Controller
         }
 
         $validator = Validator::make($aptitude_input, $rules, $messages);
-        
+
         if ($validator->fails()) {
             return back()->withInput()
                 ->withErrors($validator->errors())
                 ->with('message', 'Unable to add details.')
                 ->with('message_type', 'danger');
         }
-        DB::table('aptitude')->insert(['question' => $aptitude_input['question'], 'language' => $aptitude_input['tech_id'],'level' => $aptitude_input['level']]);
+        DB::table('aptitude')->insert(['question' => $aptitude_input['question'], 'language' => $aptitude_input['tech_id'], 'level' => $aptitude_input['level']]);
 
         $lastInsertedId = DB::getPdo()->lastInsertId();
 
@@ -1720,8 +1724,8 @@ class TlrController extends Controller
     public function StartPage($token)
     {
 
-        $current_time =  strtotime(date('H:i:s'));
-        $current_date =  date('Y-m-d');
+        $current_time = strtotime(date('H:i:s'));
+        $current_date = date('Y-m-d');
         $check_token_expire = DB::table('link_resets')->where('token', $token)->first();
         $check_token_expire = json_decode(json_encode($check_token_expire), true);
         //dd($check_token_expire);
@@ -1752,16 +1756,16 @@ class TlrController extends Controller
                             DB::table('random_questions')->insert(['token_id' => $check_token_expire['id'], 'question_id' => $question_id]);
                         }
                     }
-                    $get_question_id =  DB::table('random_questions')->select('question_id')->where('token_id', $check_token_expire['id'])->pluck('question_id');
+                    $get_question_id = DB::table('random_questions')->select('question_id')->where('token_id', $check_token_expire['id'])->pluck('question_id');
                     $get_question_id = json_decode(json_encode($get_question_id), true);
                     $get_question = DB::table('aptitude')->select('question', 'id')->whereIn('id', $get_question_id)->get()->toArray();
                     $get_question = json_decode(json_encode($get_question), true);
                     foreach ($get_question as $key => $value) {
-                        $options =  DB::table('aptitude_options')->select('option', 'is_true')->where('aptitude_id', $value['id'])->get()->toArray();
+                        $options = DB::table('aptitude_options')->select('option', 'is_true')->where('aptitude_id', $value['id'])->get()->toArray();
                         $options = json_decode(json_encode($options), true);
                         $array1 = array_column($options, 'option');
                         $get_question[$key]['choices'] = $array1;
-                        $answer =  array_search(1, array_column($options, 'is_true'));
+                        $answer = array_search(1, array_column($options, 'is_true'));
                         $get_question[$key]['correctAnswer'] = $answer;
 
                         $get_question[$key]['title'] = $get_question[$key]['question'];
@@ -1788,7 +1792,7 @@ class TlrController extends Controller
     {
 
         if ($request['level'] != "none") {
-            $aptitude =  DB::table('aptitude')->where('language', $request['hidden'])->where('level', $request['level'])->first();
+            $aptitude = DB::table('aptitude')->where('language', $request['hidden'])->where('level', $request['level'])->first();
         } else {
             $aptitude = "Not Null";
         }
@@ -1822,7 +1826,7 @@ class TlrController extends Controller
         $pdf = PDF::loadView('tlr::aptitude_result', compact('username', 'question', 'useranswer', 'correct', 'skip', 'wrong'));
 
         $path = public_path('user-uploads/');
-        $fileName =  $username . '.' . 'pdf';
+        $fileName = $username . '.' . 'pdf';
         $pdf->save($path . '/' . $fileName);
 
         $pdf = public_path('user-uploads/' . $fileName);
@@ -1850,7 +1854,7 @@ class TlrController extends Controller
     }
     public function SendAptitudeMail($data, $pdf)
     {
-        $mail =  Mail::send([], $data, function ($message) use ($data, $pdf) {
+        $mail = Mail::send([], $data, function ($message) use ($data, $pdf) {
             $message->from('noreply-worksuit@thinktanker.in');
             $message->to('hr@thinktanker.in')->subject("Apptitude result");
             $message->attach($pdf);
@@ -1964,27 +1968,27 @@ class TlrController extends Controller
         return view('tlr::yearlyreport', $this->data);
     }
 
-    public function Timetracker(Request $request)
-    {
-        //dd($request->all());
-        DB::table('time_tracker')->updateOrInsert(
-            ['date' => $request->date, 'user_id' => $request->user_id],
-            [
-                'user_id' => $request->user_id,
-                'username' => $request->username,
-                'email' => $request->email,
-                'total_time' => $request->total_time,
-                'total_key_count' => $request->total_key_count,
-                'total_mouse_move' => $request->total_mouse_move,
-                'date' => $request->date,
-                'status' => $request->status,
-                'user_img' => $request->user_img,
-                'sync' => $request->sync,
-            ]
-        );
+    // public function Timetracker(Request $request)
+    // {
+    //     //dd($request->all());
+    //     DB::table('time_tracker')->updateOrInsert(
+    //         ['date' => $request->date, 'user_id' => $request->user_id],
+    //         [
+    //             'user_id' => $request->user_id,
+    //             'username' => $request->username,
+    //             'email' => $request->email,
+    //             'total_time' => $request->total_time,
+    //             'total_key_count' => $request->total_key_count,
+    //             'total_mouse_move' => $request->total_mouse_move,
+    //             'date' => $request->date,
+    //             'status' => $request->status,
+    //             'user_img' => $request->user_img,
+    //             'sync' => $request->sync,
+    //         ]
+    //     );
 
-        return response()->json(['message' => 'success', 'Record Added Successfully'], 200);
-    }
+    //     return response()->json(['message' => 'success', 'Record Added Successfully'], 200);
+    // }
 
 
     public function Dailyreport(Request $request)
@@ -2008,15 +2012,14 @@ class TlrController extends Controller
 
             return response()->json(['error' => 'Unauthorised', 'status' => 401, 'message' => "Please Enter Email And Password "], 401);
         } else {
-            $user =  DB::table('users')->select('email', 'name', 'password', 'image')->where('email', $request->email)->first();
+            $user = DB::table('users')->select('email', 'name', 'password', 'image')->where('email', $request->email)->first();
             //dd($user);
             $user = json_decode(json_encode($user), true);
             if ($user != null) {
                 $useremail = DB::table('users')->select('email', 'id')->where('email', $request->email)->first();
                 $useremail = json_decode(json_encode($useremail), true);
-               // $profile_pic = public_path('user-uploads/').$user['image'];
-               $profile_pic = asset('/user-uploads/avatar/' . $user['image']);
-
+                // $profile_pic = public_path('user-uploads/').$user['image'];
+                $profile_pic = asset('/user-uploads/avatar/' . $user['image']);
             }
 
             if ($user != null) {
@@ -2044,5 +2047,242 @@ class TlrController extends Controller
                 return response()->json(['error' => 'Unauthorised', 'status' => 401, 'message' => "Please Enter valid Email Or Password "], 401);
             }
         }
+    }
+    public function timeTracker(Request $request)
+    {
+
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "time-tracker";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "Time-Tracker";
+
+        $user_id = $request->user;
+
+        if ($request->ajax()) {
+            $where_str = "1 =?";
+            $where_param = array('1');
+
+            if ($request->has('search.value')) {
+
+                $search = $request->search['value'];
+
+                $where_str .= " and (users.name like \"%{$search}%\""
+                    . ")";
+            }
+            $columns = array('timetracker_event.keyboard_count', 'timetracker_event.mouse_count', 'users.name');
+            $whereDate = array(date('Y-m-d'), date('Y-m-d'));
+            if (!empty($request->from_date)) {
+                $whereDate = array(date('Y-m-d', strtotime($request->from_date)), (date('Y-m-d', strtotime($request->to_date))));
+            }
+
+            if ($user_id != null) {
+
+                $timetracker_event_counts = DB::table("timetracker_event")
+                    ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
+                    ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->where('user_id', $user_id)
+                    ->whereBetween('timetracker_event.created_at', $whereDate)
+                    ->where('users.status', 'active')
+                    ->whereRaw($where_str, $where_param)
+                    ->groupBy('users.name')
+                    ->get();
+
+                $timetracker_event_count = $timetracker_event_counts->count();
+
+
+                $timetracker_event = DB::table("timetracker_event")
+                    ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
+                    ->where('user_id', $user_id)
+                    ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->whereBetween('timetracker_event.created_at', $whereDate)
+                    ->where('users.status', 'active')
+                    ->whereRaw($where_str, $where_param)
+                    ->groupBy('users.name');
+            } else {
+
+                $timetracker_event_counts = DB::table("timetracker_event")
+                    ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
+                    ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->whereBetween('timetracker_event.created_at', $whereDate)
+                    ->where('users.status', 'active')
+                    ->whereRaw($where_str, $where_param)
+                    ->groupBy('users.name')
+                    ->get();
+
+                $timetracker_event_count = $timetracker_event_counts->count();
+
+                $timetracker_event = DB::table("timetracker_event")
+                    ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
+                    ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->whereBetween('timetracker_event.created_at', $whereDate)
+                    ->where('users.status', 'active')
+                    ->whereRaw($where_str, $where_param)
+                    ->groupBy('users.name');
+            }
+            // dd($timetracker_event);
+            if ($request->has('start') && $request->get('length') != '-1') {
+                $timetracker_event = $timetracker_event->take($request->get('length'))
+                    ->skip($request->get('start'));
+            }
+
+            if ($request->has('order')) {
+                $sql_order = '';
+                for ($i = 0; $i < $request->input('order.0.column'); $i++) {
+                    $column = $columns[$i];
+                    if (false !== ($index = strpos($column, ' as '))) {
+                        $column = substr($column, 0, $index);
+                    }
+                    $timetracker_event = $timetracker_event->orderBy($column, $request->input('order.' . $i . '.dir'));
+                }
+            }
+            $timetracker_event = $timetracker_event->get()->toArray();
+            $array_data = json_decode(json_encode($timetracker_event), true);
+
+            // foreach ($array_data as $key => $value) {
+            //     $team_member = DB::table("users")->select('name', 'id')->where('id', $value['user_id'])->where('status', 'active')->get()->toArray();
+
+            //     $topic =  DB::table("topic")->select('topic', 'id')->where('id', $value['topic_id'])->get()->toArray();
+
+            //     $users = array_column($team_member, 'name');
+            //     $topics = array_column($topic, 'topic');
+            //     $array_data[$key]['user_id'] = $users;
+            //     $array_data[$key]['topic_id'] = $topics;
+            // }
+
+            $response['iTotalDisplayRecords'] = $timetracker_event_count;
+            $response['iTotalRecords'] = $timetracker_event_count;
+
+            $response['sEcho'] = intval($request->get('sEcho'));
+
+            $response['aaData'] = $array_data;
+
+            return $response;
+        }
+
+
+        $all_users = [];
+        if ($user->roles[0]['name'] == 'admin') {
+            $logged_user_id = '';
+
+
+            $all_users = DB::table('users')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
+            //dd($all_users);
+        }
+        return view('tlr::time_tracker', ['all_users' => $all_users], $this->data);
+    }
+
+    public function showImage($userId, $startDate, $endDate)
+    {
+
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "showImage";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "ShowImage";
+
+        // $path = "/User-164/2023-12-23/";
+
+
+        $folderPath = "User-$userId/";
+
+        // Adjusted date range
+        // $startDate = new \DateTime($startDate);
+        // $endDate = new \DateTime($endDate);
+        $startDate = Carbon::parse($startDate)->startOfDay();
+        $endDate = Carbon::parse($endDate)->endOfDay();
+
+
+        // Adjusted timezone
+        $startDate->setTimezone(new \DateTimeZone('UTC'));
+        $endDate->setTimezone(new \DateTimeZone('UTC'));
+
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region'  => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key'    => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+        ]);
+
+        $objects = [];
+        $nextToken = null;
+
+        do {
+            $params = [
+                'Bucket' => env('AWS_BUCKET'),
+                'Prefix' => $folderPath,
+                'MaxKeys' => 1000, // Number of keys to retrieve in one request
+                'ContinuationToken' => $nextToken,
+            ];
+
+            $result = $s3->listObjectsV2($params);
+
+            if (!empty($result['Contents'])) {
+                $objects = array_merge($objects, $result['Contents']);
+            }
+
+            $nextToken = $result['NextContinuationToken'] ?? null;
+        } while ($nextToken !== null);
+
+        $imageUrlsByDate = [];
+
+        // Actual date range filtering
+        foreach ($objects as $object) {
+            $key = $object['Key'];
+
+            // Adjusted regular expression to match "YYYY-MM-DD"
+            preg_match("/(\d{4}-\d{2}-\d{2})/", $key, $matches);
+            $dateString = $matches[1] ?? null;
+
+            // Log information for debugging
+            // error_log("Object Key: $key, Last Modified: {$object['LastModified']->format('Y-m-d H:i:s')}, Date String: $dateString");
+
+            // Adjusted date parsing
+            $objectDate = \DateTime::createFromFormat('Y-m-d', $dateString);
+
+            if ($objectDate >= $startDate && $objectDate <= $endDate) {
+                $imageUrlsByDate[$dateString][] = $s3->getObjectUrl(env('AWS_BUCKET'), $key);
+            }
+        }
+
+        return view('tlr::show_image', ['imageUrlsByDate' => $imageUrlsByDate], $this->data);
     }
 }
