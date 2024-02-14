@@ -125,7 +125,7 @@ class TlrController extends Controller
             return $response;
         }
 
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $logged_user_id = '';
 
 
@@ -196,7 +196,9 @@ class TlrController extends Controller
                 $point_count = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,users.name")
                     ->join('users', 'point.user_id', '=', 'users.id')
-                    ->where('user_id', $user_id)
+                     ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->where('point.user_id', $user_id)
                     ->whereRaw('MONTH(date) = ?', [$month])
                     ->whereRaw('YEAR(date) = ?', [$year])
                     ->whereRaw($where_str, $where_param)
@@ -206,7 +208,9 @@ class TlrController extends Controller
                 $Point = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(point.date, '%d/%m/%Y') as date,users.name,point.id as id")
                     ->join('users', 'point.user_id', '=', 'users.id')
-                    ->where('user_id', $user_id)
+                     ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->where('point.user_id', $user_id)
                     ->whereRaw('MONTH(date) = ?', [$month])
                     ->whereRaw('YEAR(date) = ?', [$year])
                     ->where('users.status', 'active')
@@ -216,6 +220,8 @@ class TlrController extends Controller
                 $point_count = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(date, '%d/%m/%Y') as date,users.name")
                     ->join('users', 'point.user_id', '=', 'users.id')
+                     ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->whereRaw('MONTH(date) = ?', [$month])
                     ->whereRaw('YEAR(date) = ?', [$year])
                     ->whereRaw($where_str, $where_param)
@@ -225,6 +231,8 @@ class TlrController extends Controller
                 $Point = DB::table("point")
                     ->selectRaw("*,DATE_FORMAT(point.date, '%d/%m/%Y') as date,users.name,point.id as id")
                     ->join('users', 'point.user_id', '=', 'users.id')
+                     ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->whereRaw('MONTH(date) = ?', [$month])
                     ->whereRaw('YEAR(date) = ?', [$year])
                     ->where('users.status', 'active')
@@ -250,7 +258,8 @@ class TlrController extends Controller
             $array_data = json_decode(json_encode($Point), true);
 
             foreach ($array_data as $key => $value) {
-                $team_member = DB::table("users")->select('name', 'id')->where('id', $value['user_id'])->where('status', 'active')->get()->toArray();
+                $team_member = DB::table("users")->select('name', 'id')->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')->where('id', $value['user_id'])->where('status', 'active')->get()->toArray();
 
                 $topic = DB::table("topic")->select('topic', 'id')->where('id', $value['topic_id'])->get()->toArray();
 
@@ -272,12 +281,9 @@ class TlrController extends Controller
 
 
         $all_users = [];
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $logged_user_id = '';
-
-
-            $all_users = DB::table('users')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
-            //dd($all_users);
+            $all_users =User::withRole('employee')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
         }
         return view('tlr::tlr_month_admin', ['all_users' => $all_users], $this->data);
     }
@@ -314,7 +320,7 @@ class TlrController extends Controller
         }
 
 
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $user_id = $request->user;
         } else {
             $user_id = Auth::id();
@@ -404,11 +410,11 @@ class TlrController extends Controller
         }
 
         $all_users = [];
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $logged_user_id = '';
 
 
-            $all_users = DB::table('users')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
+            $all_users =User::withRole('employee')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
             //dd($all_users);
         }
 
@@ -443,7 +449,8 @@ class TlrController extends Controller
 
         if ($request->ajax()) {
             $id = $request->id;
-            $participant = DB::table('users')->select('name', 'id')->where('status', 'active')->get()->pluck('name', 'id')->toArray();
+            $participant = DB::table('users')->select('name', 'id')->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')->where('status', 'active')->get()->pluck('name', 'id')->toArray();
             unset($participant[$id]);
             return response()->json(["participant" => $participant]);
         }
@@ -452,7 +459,8 @@ class TlrController extends Controller
         unset($topic[10]);
         unset($topic[11]);
 
-        $users = DB::table('users')->select('name', 'id')->where('status', 'active')->get()->pluck('name', 'id')->toArray();
+        $users = DB::table('users')->select('name', 'id')->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')->where('status', 'active')->get()->pluck('name', 'id')->toArray();
 
 
         $skills = ['Unsatisfactory', 'Less than satisfactory', 'Fully satisfactory', 'Excellent'];
@@ -642,12 +650,14 @@ class TlrController extends Controller
             $columns = array('users.name', 'point.point', 'point.id', 'point.user_id', 'point.from_hour', 'point.to_hour', 'point.topic_id', 'point.subject', 'point.participant', 'point.date');
 
             $Point = DB::table("point")
-                ->selectRaw("*,DATE_FORMAT(point.date, '%d/%m/%Y') as date,SUM(point.point) as point,users.name")
+                ->selectRaw("point.*,DATE_FORMAT(point.date, '%d/%m/%Y') as date,SUM(point.point) as point,users.name")
                 ->join('users', 'point.user_id', '=', 'users.id')
+                ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                 ->whereRaw('MONTH(date) = ?', [$month])
                 ->whereRaw('YEAR(date) = ?', [$year])
                 ->where('users.status', 'active')
-                ->groupby('user_id')
+                ->groupby('point.user_id')
                 ->whereRaw($where_str, $where_param);
 
             $Point_count = $Point->get()->toArray();
@@ -677,7 +687,7 @@ class TlrController extends Controller
             return $response;
         }
 
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $logged_user_id = '';
         }
         return view('tlr::tlr_point', ['id' => $id, 'logged_user_id' => $logged_user_id], $this->data);
@@ -1903,6 +1913,8 @@ class TlrController extends Controller
             }
 
             $usersData = DB::table('users')
+            ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                 ->where('status', 'active')
                 ->whereRaw($where_str, $where_params)
                 ->get();
@@ -1996,8 +2008,8 @@ class TlrController extends Controller
 
         DB::table('daily_record')->insert([
             'user_id' => $request->user_id,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'clock_in_time' => $request->clock_in_time,
+            'clock_out_time' => $request->clock_out_time,
             'total_time' => $request->total_time,
             'date' => $request->date,
             'sync' => $request->sync,
@@ -2012,11 +2024,13 @@ class TlrController extends Controller
 
             return response()->json(['error' => 'Unauthorised', 'status' => 401, 'message' => "Please Enter Email And Password "], 401);
         } else {
-            $user = DB::table('users')->select('email', 'name', 'password', 'image')->where('email', $request->email)->first();
+            $user = DB::table('users')->select('email', 'name', 'password', 'image')->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')->where('email', $request->email)->first();
             //dd($user);
             $user = json_decode(json_encode($user), true);
             if ($user != null) {
-                $useremail = DB::table('users')->select('email', 'id')->where('email', $request->email)->first();
+                $useremail = DB::table('users')->select('email', 'id')->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')->where('email', $request->email)->first();
                 $useremail = json_decode(json_encode($useremail), true);
                 // $profile_pic = public_path('user-uploads/').$user['image'];
                 $profile_pic = asset('/user-uploads/avatar/' . $user['image']);
@@ -2099,6 +2113,8 @@ class TlrController extends Controller
                 $timetracker_event_counts = DB::table("timetracker_event")
                     ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
                     ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->where('user_id', $user_id)
                     ->whereBetween('timetracker_event.created_at', $whereDate)
                     ->where('users.status', 'active')
@@ -2111,6 +2127,8 @@ class TlrController extends Controller
 
                 $timetracker_event = DB::table("timetracker_event")
                     ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->where('user_id', $user_id)
                     ->join('users', 'timetracker_event.user_id', '=', 'users.id')
                     ->whereBetween('timetracker_event.created_at', $whereDate)
@@ -2122,6 +2140,8 @@ class TlrController extends Controller
                 $timetracker_event_counts = DB::table("timetracker_event")
                     ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
                     ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->whereBetween('timetracker_event.created_at', $whereDate)
                     ->where('users.status', 'active')
                     ->whereRaw($where_str, $where_param)
@@ -2133,6 +2153,8 @@ class TlrController extends Controller
                 $timetracker_event = DB::table("timetracker_event")
                     ->selectRaw("users.name, SUM(keyboard_count) as keyboard_count, SUM(mouse_count) as mouse_count,users.id as user_id")
                     ->join('users', 'timetracker_event.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
                     ->whereBetween('timetracker_event.created_at', $whereDate)
                     ->where('users.status', 'active')
                     ->whereRaw($where_str, $where_param)
@@ -2180,11 +2202,11 @@ class TlrController extends Controller
 
 
         $all_users = [];
-        if ($user->roles[0]['name'] == 'admin') {
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
             $logged_user_id = '';
 
 
-            $all_users = DB::table('users')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
+            $all_users =User::withRole('employee')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
             //dd($all_users);
         }
         return view('tlr::time_tracker', ['all_users' => $all_users], $this->data);
@@ -2284,5 +2306,200 @@ class TlrController extends Controller
         }
 
         return view('tlr::show_image', ['imageUrlsByDate' => $imageUrlsByDate], $this->data);
+    }
+
+    public function tlrcheckInOut(Request $request)
+    {
+
+        $user = session()->get('user');
+        $sidebar_user_perms = session()->get('sidebar_user_perms');
+        $pusher_settings = session()->get('pusher_settings');
+        $push_setting = session()->get('push_setting');
+        $id = $user->id;
+        $appTheme = session()->get('admin_theme');
+        $sidebarUserPermissions = $sidebar_user_perms;
+        $this->currentRouteName = "tlr-checkInOut";
+        $worksuitePlugins = [];
+        $customLink = [];
+        $this->checkListCompleted = 5;
+        $this->checkListTotal = 6;
+        $this->pushSetting = $push_setting;
+        $this->user = $user;
+        $this->appTheme = $appTheme;
+        $this->worksuitePlugins = $worksuitePlugins;
+        $this->pusherSettings = $pusher_settings;
+        $this->activeTimerCount = 0;
+        $this->customLink = $customLink;
+        $this->unreadMessagesCount = 0;
+        $this->sidebarUserPermissions = $sidebarUserPermissions;
+        $this->unreadNotificationCount = 0;
+        $this->pageTitle = "TLR CheckInOut";
+        //dd($request->all());
+        if (Session::get('month') != 15) {
+            $month = Session::get('month') + 1;
+            $user_id = Session::get('user_id');
+        } elseif (isset($request->month)) {
+            $month = intval($request['month']) + 1;
+            $user_id = $request->user;
+        } else {
+            $user_id = $request->user;
+            $month = date('m');
+        }
+
+        if (isset($request->year)) {
+            $year = $request->year;
+        } else {
+            $year = date('Y');
+        }
+
+
+        if ($request->ajax()) {
+
+            $where_str = "";
+            $where_param = array();
+
+            if ($request->has('search.value')) {
+                $search = $request->search['value'];
+                $where_str .= " (users.name like \"%{$search}%\")";
+            }
+            //dd($user_id);
+            $columns = array('clock_in_time', 'clock_out_time', 'users.name');
+            if ($user_id != null) {
+                // dd($user_id);
+                $point_count = DB::table("attendances")
+                    ->selectRaw("clock_in_time,clock_out_time,users.name")
+                    ->join('users', 'attendances.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->where('user_id', $user_id)
+                    ->whereRaw('MONTH(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$month])
+                    ->whereRaw('YEAR(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$year])
+                    ->where('users.status', 'active')
+                    // ->whereRaw($where_str, $where_param)
+                    ->count();
+                $Point = DB::table("attendances")
+                    ->selectRaw("clock_in_time,clock_out_time,users.name")
+                    ->join('users', 'attendances.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->where('user_id', $user_id)
+                    ->whereRaw('MONTH(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$month])
+                    ->whereRaw('YEAR(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$year])
+                    ->where('users.status', 'active');
+                //   ->whereRaw($where_str, $where_param);
+                // ->get();
+            } else {
+
+                $point_count = DB::table("attendances")
+                    ->selectRaw("clock_in_time,clock_out_time,users.name")
+                    ->join('users', 'attendances.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->whereRaw('MONTH(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$month])
+                    ->whereRaw('YEAR(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$year])
+                    ->where('users.status', 'active')
+                    //   ->whereRaw($where_str, $where_param)
+                    ->count();
+
+                $Point = DB::table("attendances")
+                    ->selectRaw("clock_in_time,clock_out_time,users.name")
+                    ->join('users', 'attendances.user_id', '=', 'users.id')
+                    ->join('role_user','role_user.user_id', '=', 'users.id')
+                    ->where('role_user.role_id', '2')
+                    ->whereRaw('MONTH(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$month])
+                    ->whereRaw('YEAR(STR_TO_DATE(attendances.clock_in_time, "%Y-%m-%d")) = ?', [$year])
+                    ->where('users.status', 'active');
+                //   ->whereRaw($where_str, $where_param);
+                // ->get();
+
+            }
+            // $Point = $Point->get()->toArray();
+            // dd($Point);
+            if ($request->has('start') && $request->get('length') != '-1') {
+                $Point = $Point->take($request->get('length'))
+                    ->skip($request->get('start'));
+            }
+
+            if ($request->has('order')) {
+                $sql_order = '';
+                for ($i = 0; $i < $request->input('order.0.column'); $i++) {
+                    $column = $columns[$i];
+                    if (false !== ($index = strpos($column, ' as '))) {
+                        $column = substr($column, 0, $index);
+                    }
+                    $Point = $Point->orderBy($column, $request->input('order.' . $i . '.dir'));
+                }
+            }
+
+            $Point = $Point->get()->toArray();
+            //dd($Point);
+
+            // Transpose the data
+
+            // $transposedData = [];
+            // foreach ($Point as $rowIndex => $row) {
+            //     foreach ($row as $colIndex => $value) {
+            //         $transposedData[$colIndex][$rowIndex] = $value;
+            //     }
+            // }
+            $response['aaData'] = [];
+            $utcTimezone = new DateTimeZone('UTC');
+            $laTimezone = new DateTimeZone('Asia/Kolkata');  // Corrected timezone identifier
+
+            foreach ($Point as $row) {
+                $start_time = new DateTime($row->clock_in_time, $utcTimezone);
+                $start_time->setTimeZone($laTimezone);
+                $clock_in_time = $start_time->format('Y-m-d H:i:s');
+
+                $end_time = $row->clock_out_time ? new DateTime($row->clock_out_time, $utcTimezone) : null;
+                $clock_out_time = $end_time ? $end_time->setTimeZone($laTimezone)->format('Y-m-d H:i:s') : null;
+
+                $response['aaData'][] = [
+                    'name' => $row->name,
+                    'start_time' => $clock_in_time,
+                    'end_time' => $clock_out_time,
+                ];
+            }
+
+            $response['iTotalDisplayRecords'] = $point_count;
+            $response['iTotalRecords'] = $point_count;
+            $response['sEcho'] = intval($request->get('sEcho'));
+
+            return response()->json($response);
+        }
+
+
+        $all_users = [];
+        if(in_array('admin', user_roles())   || in_array('human-resource', user_roles()) ) {
+            $logged_user_id = '';
+
+
+
+            $all_users =User::withRole('employee')->where('status', 'active')->orderBy('name')->pluck('name', 'id')->toArray();
+            //dd($all_users);
+        }
+        return view('tlr::tlr_checkinout', ['all_users' => $all_users], $this->data);
+    }
+
+    public function getData()
+    {
+        $data = [
+            'rows' => [
+                [
+                    'label' => 'Name:',
+                    'values' => ['Gaurav Patel'],
+                ],
+                [
+                    'label' => 'Start Time:',
+                    'values' => ['2023-11-01 07:01:23', '2023-11-02 09:32:12', '2023-11-03 10:45:30'],
+                ],
+                [
+                    'label' => 'End Time:',
+                    'values' => ['2023-11-01 07:01:24', '2023-11-02 09:32:28', '2023-11-03 10:50:15'],
+                ],
+            ],
+        ];
+
+        return response()->json($data);
     }
 }

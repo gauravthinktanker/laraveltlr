@@ -16,16 +16,16 @@ Route::group(['middleware' => 'web'], function () {
         'laraveltlr\tlr\TlrController@tlrAdminMonth'
     )->name('tlr_month_admin');
     Route::post(
-        'tlr-month-delete',
-        'laraveltlr\tlr\TlrController@tlrAdminMonthDelete'
+        'tlr-month-delete'
+        ,'laraveltlr\tlr\TlrController@tlrAdminMonthDelete'
     )->name('point.delete');
     Route::get(
-        'tlr-create',
-        'laraveltlr\tlr\TlrController@tlrCreate'
+        'tlr-create'
+        ,'laraveltlr\tlr\TlrController@tlrCreate'
     )->name('point.create');
     Route::post(
-        'tlr-store',
-        'laraveltlr\tlr\TlrController@tlrStore'
+        'tlr-store'
+        ,'laraveltlr\tlr\TlrController@tlrStore'
     )->name('point.store');
     Route::get(
         'tlr-points/{month}',
@@ -35,7 +35,7 @@ Route::group(['middleware' => 'web'], function () {
         'tlr-point/{month_user}',
         'laraveltlr\tlr\TlrController@monthsetuser'
     )->name('monthsetuser');
-
+   
 
     Route::get(
         'tlr-point-master',
@@ -130,7 +130,7 @@ Route::group(['middleware' => 'web'], function () {
         'aptitude-create',
         'laraveltlr\tlr\TlrController@aptitudeCreate'
     )->name('aptitude.create');
-
+     
     Route::post(
         'aptitude_store',
         'laraveltlr\tlr\TlrController@aptitudeStore'
@@ -188,6 +188,12 @@ Route::group(['middleware' => 'web'], function () {
         'showImage/{user_id}/{start_date}/{end_date}',
         'laraveltlr\tlr\TlrController@showImage'
     )->name('showImage');
+    
+    Route::get(
+        'tlr-checkInOut',
+        'laraveltlr\tlr\TlrController@tlrcheckInOut'
+    )->name('tlr_checkInOut');
+
 });
 Route::post(
     'emp-store',
